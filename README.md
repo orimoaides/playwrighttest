@@ -22,10 +22,10 @@ URL（または貼り付けHTML）を渡すと、そのサイトの**操作マ�
    - **Gemini Canvas 上で動かす場合は設定不要**。Canvas はキーが空のとき実行時に自動でキーを注入します（`CONFIG.USE_CANVAS_KEY = true`）。
    - **Canvas 外でローカル単体利用する場合**のみ、コード冒頭の `CONFIG.GEMINI_API_KEY` に自分のキーを入れ、`CONFIG.USE_CANVAS_KEY = false` にします（※配布・コミット時はキーを空に戻すこと）。
    - 使用モデルはコードの `CONFIG.MODEL`（既定: `gemini-2.5-flash`）で指定します。
-   - 注意: URL取得モードはブラウザ/Canvas の CORS 制約でほぼ失敗します。Canvas では「HTML を貼り付け」モードを使ってください。
 3. 入力モードを選ぶ:
-   - **起点URL から取得**: URL を入れる。※ブラウザの CORS 制約で取得できないサイトが多いです。失敗したら次のモードへ。
-   - **HTML を貼り付け**: オリジン（例 `https://example.com`）と、対象ページの HTML を貼る。「サンプルHTMLを入れる」ボタンで動作確認できます。
+   - **起点URL から取得**: URL を入れるだけ。直接 fetch が CORS で失敗した場合は、`CONFIG.CORS_PROXIES` のプロキシ経由に自動フォールバックして外部サイトを取得します（検証では `members.co.jp` から 45 ルート抽出を確認）。
+     - 制約: 取得は**静的HTMLのみ**（JS実行なし）。JS描画のSPAや認証必須ページは取得できないことがあります。対象URL・HTMLは第三者プロキシを経由します。恒久対応はフェーズ②（サーバー側 Playwright 取得）。
+   - **HTML を貼り付け**: オリジン（例 `https://example.com`）と、対象ページの HTML を貼る。「サンプルを読み込む」ボタンで動作確認できます。プロキシを使いたくない場合や認証ページではこちら。
 4. **▶ パイプライン実行** を押す。
 5. 進捗ログを確認し、完了したら **manual.html / scenario.json / steps.json** をダウンロード、プレビューを確認。
 

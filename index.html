@@ -225,7 +225,7 @@
       <div id="urlMode">
         <label>起点 URL</label>
         <input id="startUrl" type="text" placeholder="https://example.com/" />
-        <div class="hint">本フェーズでは外部サイトの直接取得はブラウザの CORS 制約により多くのサイトで行えません。その場合は「HTML を貼り付け」モードをご利用ください。URL を渡すだけの巡回はフェーズ②（サーバー側取得）で対応します。</div>
+        <div class="hint">外部サイトは直接取得できない場合、自動で CORS プロキシ経由に切り替えて取得します（対象URL・HTMLは第三者プロキシを経由）。取得は静的HTMLのみで、JS描画のSPAや認証必須ページは取れないことがあります。取得できない場合は「HTML を貼り付け」もご利用ください。恒久対応はフェーズ②（サーバー側取得）。</div>
       </div>
       <div id="htmlMode" style="display:none">
         <label>オリジン <span class="opt">（例: https://example.com）</span></label>
@@ -287,7 +287,17 @@ const CONFIG = {
   //   Canvas は「キーを空文字にしておくと実行時にプラットフォームが自動注入する」仕組みのため、
   //   キーが空でもブロックせず実行する。Canvas外（ローカルのHTML単体）で使う時は、
   //   false にして GEMINI_API_KEY か入力欄に自分のキーを入れる。
-  USE_CANVAS_KEY: true
+  USE_CANVAS_KEY: true,
+
+  // ★ 外部サイトを URL だけで取得するための CORS プロキシ（直接 fetch が CORS で失敗した時に使う）。
+  //   上から順に試し、成功した時点で確定する。空配列にするとプロキシを使わない。
+  //   注意: 取得は「静的HTMLのみ」（JS実行はしない）。対象URLとHTMLは第三者プロキシを経由する。
+  //   認証必須ページやJS描画のSPAは取得できないことがある。恒久対応はフェーズ②（サーバー側取得）。
+  CORS_PROXIES: [
+    (u) => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    (u) => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+    (u) => `https://thingproxy.freeboard.io/fetch/${u}`
+  ]
 };
 
 /* 最新の生成結果を保持（ダウンロードが参照） */
@@ -325,6 +335,39 @@ function setStatus(text, mode){ // mode: "running" | "done" | "error" | undefine
   $("statusText").textContent = text;
   const s = $("status"); s.classList.remove("running", "done", "error");
   if (mode) s.classList.add(mode);
+}
+
+/* =================================================================================
+ * ページ取得: 直接 fetch → 失敗したら CORS プロキシ経由（外部サイトを URL だけで取得）
+ *   取得できたら HTML 文字列を返す。全滅したら null。
+ *   ※ プロキシ経由は「静的HTMLのみ」。JS描画SPA/認証ページは取れないことがある。
+ *   TODO(phase2): サーバー側 Playwright 取得に置き換え（JS実行・認証・CORS非依存）。
+ * ================================================================================= */
+async function fetchPage(targetUrl) {
+  // 1) まず直接取得（同一オリジン等で可能なら最速・第三者を経由しない）
+  try {
+    const res = await fetch(targetUrl, { mode: "cors" });
+    if (res.ok) {
+      const txt = await res.text();
+      if (txt && txt.trim()) { logOk("直接取得に成功しました。"); return txt; }
+    }
+  } catch (e) { /* CORS 等で失敗 → プロキシにフォールバック */ }
+
+  // 2) CORS プロキシ経由（外部サイト対応）。上から順に試す。
+  const proxies = CONFIG.CORS_PROXIES || [];
+  for (let i = 0; i < proxies.length; i++) {
+    setStatus(`CORS プロキシ経由で取得しています（${i + 1}/${proxies.length}）…`, "running");
+    logStart(`CORS プロキシ経由で取得 (${i + 1}/${proxies.length})`);
+    try {
+      const proxied = proxies[i](targetUrl);
+      const res = await fetch(proxied);
+      if (!res.ok) { logWarn(`プロキシ ${i + 1} 応答 ${res.status}（次を試行）`); continue; }
+      const txt = await res.text();
+      if (txt && txt.trim()) { logOk(`プロキシ ${i + 1} 経由で取得成功`); return txt; }
+      logWarn(`プロキシ ${i + 1} 応答が空（次を試行）`);
+    } catch (e) { logWarn(`プロキシ ${i + 1} 失敗: ${e.message}（次を試行）`); }
+  }
+  return null;
 }
 
 /* =================================================================================
@@ -581,15 +624,14 @@ async function runPipeline() {
       if (!startUrl) throw new Error("起点 URL を入力してください。");
       origin = new URL(startUrl).origin;
       setStatus("Web ページを取得しています…", "running"); logStart(`URL 取得を試行: ${startUrl}`);
-      let fetched = false;
-      try { const res = await fetch(startUrl, { mode: "cors" }); html = await res.text(); fetched = true; logOk(`HTML 取得成功 (${html.length.toLocaleString()} bytes)`); }
-      catch (e) { /* 外部サイトの CORS 制約。フェーズ①では想定内のため、エラー扱いにせず案内する。 */ }
-      if (!fetched) {
-        logWarn("このフェーズでは外部サイトの直接取得は行えません（ブラウザの CORS 制約による想定内の挙動です）。");
-        logWarn("→「HTML を貼り付け」モードに切り替えてご利用ください。URL を渡すだけの巡回はフェーズ②（サーバー側取得）で対応します。");
-        setStatus("外部サイトの直接取得は CORS 制約のため不可。「HTML を貼り付け」をご利用ください。", null);
+      html = await fetchPage(startUrl);
+      if (html == null) {
+        logWarn("外部サイトの取得に失敗しました（直接 fetch・CORS プロキシともに不可）。");
+        logWarn("→ JS描画のSPAや認証必須ページの可能性があります。「HTML を貼り付け」モードもご利用いただけます（恒久対応はフェーズ②のサーバー側取得）。");
+        setStatus("外部サイトの取得に失敗しました。別サイトを試すか「HTML を貼り付け」をご利用ください。", null);
         return; // finally で実行ボタンは再有効化される
       }
+      logOk(`HTML 取得成功 (${html.length.toLocaleString()} bytes)`);
     } else {
       origin = $("originInput").value.trim(); html = $("htmlInput").value;
       if (!origin) throw new Error("オリジンを入力してください。");
