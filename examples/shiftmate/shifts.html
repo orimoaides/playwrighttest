@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>シフト一覧 — シフトメイト</title>
+<link rel="stylesheet" href="assets/app.css" />
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <a href="index.html" class="brand"><span class="dot">S</span>シフトメイト</a>
+    <div class="navlabel">メニュー</div>
+    <a href="dashboard.html"><span class="ic">▦</span> ダッシュボード</a>
+    <a href="shifts.html" class="active"><span class="ic">🗓</span> シフト</a>
+    <a href="staff.html"><span class="ic">👥</span> スタッフ</a>
+    <a href="settings.html"><span class="ic">⚙</span> 設定</a>
+    <div class="side-foot">
+      <div class="avatar">田</div>
+      <div><div style="color:#fff;font-weight:700;font-size:13px">田中 太郎</div><div style="font-size:11px;color:#8a8ea6">まるごとカフェ 渋谷店</div></div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div><h1>シフト</h1><div class="sub">登録済みのシフト一覧</div></div>
+      <div class="spacer"></div>
+      <input class="search" placeholder="スタッフ名で絞り込み…" />
+      <a href="shift-new.html" class="btn btn-primary btn-sm">＋ 新規シフト</a>
+    </div>
+
+    <div class="content">
+      <div class="page-actions">
+        <div class="tabs"><a class="active">今週</a><a>来週</a><a>すべて</a></div>
+        <div class="spacer"></div>
+        <span class="muted">42 件 ・ 未充足 3 件</span>
+      </div>
+
+      <div class="panel">
+        <table class="tbl">
+          <thead><tr><th>日付</th><th>スタッフ</th><th>時間帯</th><th>役割</th><th>状態</th><th></th></tr></thead>
+          <tbody>
+            <tr><td>6/29(月)</td><td><div class="who"><span class="av" style="background:var(--coral)">田</span>田中 太郎</div></td><td class="mono">09:00–15:00</td><td>ホール</td><td><span class="badge green">確定</span></td><td><a href="shift-new.html" class="btn btn-ghost btn-sm">編集</a></td></tr>
+            <tr><td>6/29(月)</td><td><div class="who"><span class="av" style="background:var(--mint)">佐</span>佐藤 花子</div></td><td class="mono">15:00–22:00</td><td>キッチン</td><td><span class="badge green">確定</span></td><td><a href="shift-new.html" class="btn btn-ghost btn-sm">編集</a></td></tr>
+            <tr><td>6/30(火)</td><td><div class="who"><span class="av" style="background:var(--violet)">鈴</span>鈴木 一郎</div></td><td class="mono">09:00–17:00</td><td>レジ</td><td><span class="badge green">確定</span></td><td><a href="shift-new.html" class="btn btn-ghost btn-sm">編集</a></td></tr>
+            <tr><td>7/2(木)</td><td><div class="who"><span class="av" style="background:var(--bg-2);color:var(--ink-3)">?</span><span class="muted">未割当</span></div></td><td class="mono">18:00–22:00</td><td>ホール</td><td><span class="badge coral">未充足</span></td><td><a href="shift-new.html" class="btn btn-primary btn-sm">割当</a></td></tr>
+            <tr><td>7/3(金)</td><td><div class="who"><span class="av" style="background:var(--coral)">田</span>田中 太郎</div></td><td class="mono">15:00–22:00</td><td>ホール</td><td><span class="badge gray">下書き</span></td><td><a href="shift-new.html" class="btn btn-ghost btn-sm">編集</a></td></tr>
+            <tr><td>7/4(土)</td><td><div class="who"><span class="av" style="background:var(--butter);color:#5a4300">山</span>山本 みき</div></td><td class="mono">09:00–15:00</td><td>キッチン</td><td><span class="badge green">確定</span></td><td><a href="shift-new.html" class="btn btn-ghost btn-sm">編集</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

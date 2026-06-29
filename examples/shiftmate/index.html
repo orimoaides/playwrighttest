@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>シフトメイト — 飲食・小売のためのシフト管理</title>
+<meta name="description" content="シフト作成・希望収集・人件費管理をひとつに。現場のシフト調整を10分で。" />
+<link rel="stylesheet" href="assets/app.css" />
+</head>
+<body>
+<!-- ナビ -->
+<nav class="nav">
+  <div class="nav-in">
+    <a href="index.html" class="brand"><span class="dot">S</span>シフトメイト</a>
+    <div class="nav-links">
+      <a href="index.html#features">機能</a>
+      <a href="index.html#how">使い方</a>
+      <a href="index.html#pricing">料金</a>
+      <a href="dashboard.html">デモを見る</a>
+    </div>
+    <div class="nav-cta">
+      <a href="login.html" class="btn btn-ghost btn-sm">ログイン</a>
+      <a href="signup.html" class="btn btn-primary btn-sm">無料で始める</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ヒーロー -->
+<header class="hero">
+  <div class="hero-grid">
+    <div>
+      <span class="eyebrow reveal">飲食・小売チームのための</span>
+      <h1 class="hero-h reveal">シフト作成を、<br><em>10分で終わらせる。</em></h1>
+      <p class="hero-lead reveal">希望シフトの収集、自動割り当て、人件費の見える化までをひとつに。
+        紙とエクセルの往復から、現場を解放します。</p>
+      <div class="hero-actions reveal">
+        <a href="signup.html" class="btn btn-primary">無料で始める →</a>
+        <a href="dashboard.html" class="btn btn-ghost">ダッシュボードを見る</a>
+      </div>
+      <div class="hero-note reveal">★★★★★ 全国 3,200 店舗が導入 ・ クレジットカード不要</div>
+    </div>
+
+    <!-- 作り込み: ミニ週カレンダー -->
+    <div class="hero-card reveal" aria-hidden="true">
+      <div class="hc-top"><span class="hc-title">今週のシフト</span><span class="mono" style="font-size:12px;color:var(--ink-3)">6/29 – 7/5</span></div>
+      <div class="week">
+        <div class="wd"><div class="dl">月</div><div class="cell"><span class="chip a">朝 田中</span><span class="chip b">夜 佐藤</span></div></div>
+        <div class="wd"><div class="dl">火</div><div class="cell"><span class="chip c">朝 鈴木</span></div></div>
+        <div class="wd"><div class="dl">水</div><div class="cell"><span class="chip a">朝 田中</span><span class="chip d">夜 山本</span></div></div>
+        <div class="wd"><div class="dl">木</div><div class="cell"><span class="chip b">終日 佐藤</span></div></div>
+        <div class="wd"><div class="dl">金</div><div class="cell"><span class="chip c">朝 鈴木</span><span class="chip a">夜 田中</span></div></div>
+        <div class="wd"><div class="dl">土</div><div class="cell"><span class="chip d">朝 山本</span><span class="chip b">夜 佐藤</span></div></div>
+        <div class="wd"><div class="dl">日</div><div class="cell"><span class="chip a">終日 田中</span></div></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="logos">
+  <span>導入企業</span>
+  <b>まるごとカフェ</b><b>Bistro Aoki</b><b>セブンマート</b><b>湯けむり食堂</b><b>GREEN GROCER</b>
+</div>
+
+<!-- 機能 -->
+<section class="section" id="features">
+  <div class="section-head">
+    <span class="eyebrow">Features</span>
+    <h2>現場が回る、3つの仕組み</h2>
+    <p>シフト管理に必要なものだけを、迷わない設計で。</p>
+  </div>
+  <div class="features">
+    <div class="feature">
+      <div class="fi" style="background:var(--coral-soft);color:var(--coral-d)">🗓️</div>
+      <h3>ドラッグでシフト作成</h3>
+      <p>週ビューにスタッフを置くだけ。テンプレートの複製で、来週分は数クリックで完成します。</p>
+    </div>
+    <div class="feature">
+      <div class="fi" style="background:var(--mint-soft);color:#0c7a63">📩</div>
+      <h3>希望シフトの自動収集</h3>
+      <p>スタッフはスマホから希望を提出。締切リマインドも自動で、回収の催促はもう不要です。</p>
+    </div>
+    <div class="feature">
+      <div class="fi" style="background:#efeaff;color:var(--violet)">💴</div>
+      <h3>人件費の見える化</h3>
+      <p>シフトを組むそばから予定人件費を自動計算。予算オーバーは色でひと目で分かります。</p>
+    </div>
+  </div>
+</section>
+
+<!-- 使い方 -->
+<section class="section" id="how" style="background:var(--bg-2);max-width:none">
+  <div style="max-width:1160px;margin:0 auto">
+    <div class="section-head">
+      <span class="eyebrow">How it works</span>
+      <h2>はじめの一日でできること</h2>
+    </div>
+    <div class="steps">
+      <div class="step"><h3>スタッフを登録</h3><p>名前と時給、入れる時間帯を登録。CSV からの一括取り込みにも対応しています。</p></div>
+      <div class="step"><h3>希望を集める</h3><p>提出リンクを共有するだけ。集まった希望は週ビューに自動で反映されます。</p></div>
+      <div class="step"><h3>確定して共有</h3><p>ボタンひとつで確定。スタッフへ通知が飛び、当日の出勤がスマホで分かります。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 料金 -->
+<section class="section" id="pricing">
+  <div class="section-head">
+    <span class="eyebrow">Pricing</span>
+    <h2>店舗の規模に合わせて</h2>
+    <p>いつでも変更・解約できます。年払いで2ヶ月分お得。</p>
+  </div>
+  <div class="pricing">
+    <div class="plan">
+      <div class="pn">スターター</div>
+      <div class="pp">¥0<span> / 月</span></div>
+      <div class="muted">〜5名の小規模チーム</div>
+      <ul><li>シフト作成</li><li>希望収集</li><li>スマホ閲覧</li></ul>
+      <a href="signup.html" class="btn btn-ghost btn-block">無料で始める</a>
+    </div>
+    <div class="plan featured">
+      <div class="pn">スタンダード</div>
+      <div class="pp">¥4,800<span> / 月</span></div>
+      <div class="muted">〜30名の単一店舗</div>
+      <ul><li>スターターの全機能</li><li>人件費の自動計算</li><li>テンプレート複製</li><li>勤怠連携</li></ul>
+      <a href="signup.html" class="btn btn-primary btn-block">14日間 無料で試す</a>
+    </div>
+    <div class="plan">
+      <div class="pn">ビジネス</div>
+      <div class="pp">¥12,000<span> / 月</span></div>
+      <div class="muted">複数店舗・本部管理</div>
+      <ul><li>スタンダードの全機能</li><li>複数店舗の横断管理</li><li>権限・監査ログ</li><li>API 連携</li></ul>
+      <a href="signup.html" class="btn btn-ghost btn-block">問い合わせる</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="section" style="text-align:center">
+  <h2 style="font-family:var(--disp);font-weight:800;font-size:clamp(26px,3.6vw,40px);letter-spacing:-.02em;margin:0 0 14px">今週のシフトから、らくに。</h2>
+  <p class="muted" style="font-size:16px;margin:0 0 22px">登録は2分。クレジットカードは要りません。</p>
+  <a href="signup.html" class="btn btn-primary">無料で始める →</a>
+</section>
+
+<!-- フッター -->
+<footer class="footer">
+  <div class="footer-in">
+    <div>
+      <div class="brand"><span class="dot">S</span>シフトメイト</div>
+      <p style="color:#a7abc0;font-size:13.5px;max-width:280px;margin-top:10px">飲食・小売チームのためのシフト管理。現場の「あたりまえ」を、もっとらくに。</p>
+    </div>
+    <div><h4>製品</h4><a href="index.html#features">機能</a><a href="index.html#pricing">料金</a><a href="dashboard.html">デモ</a></div>
+    <div><h4>アカウント</h4><a href="login.html">ログイン</a><a href="signup.html">新規登録</a><a href="settings.html">設定</a></div>
+    <div><h4>会社</h4><a href="index.html">運営会社</a><a href="index.html">利用規約</a><a href="index.html">お問い合わせ</a></div>
+  </div>
+  <div class="footer-bottom">© 2026 ShiftMate Inc. — これはデモ用のサンプルサイトです。</div>
+</footer>
+</body>
+</html>

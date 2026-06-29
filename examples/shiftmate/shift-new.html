@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>シフト作成 — シフトメイト</title>
+<link rel="stylesheet" href="assets/app.css" />
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <a href="index.html" class="brand"><span class="dot">S</span>シフトメイト</a>
+    <div class="navlabel">メニュー</div>
+    <a href="dashboard.html"><span class="ic">▦</span> ダッシュボード</a>
+    <a href="shifts.html" class="active"><span class="ic">🗓</span> シフト</a>
+    <a href="staff.html"><span class="ic">👥</span> スタッフ</a>
+    <a href="settings.html"><span class="ic">⚙</span> 設定</a>
+    <div class="side-foot">
+      <div class="avatar">田</div>
+      <div><div style="color:#fff;font-weight:700;font-size:13px">田中 太郎</div><div style="font-size:11px;color:#8a8ea6">まるごとカフェ 渋谷店</div></div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div><h1>シフトを作成</h1><div class="sub"><a href="shifts.html" style="color:var(--coral-d)">← シフト一覧へ戻る</a></div></div>
+    </div>
+
+    <div class="content">
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-head"><h2>シフトの詳細</h2></div>
+          <div class="panel-body">
+            <form action="shifts.html" method="get">
+              <div class="field">
+                <label for="staff">スタッフ</label>
+                <select id="staff" name="staff">
+                  <option value="">選択してください</option>
+                  <option>田中 太郎（ホール / ¥1,200）</option>
+                  <option>佐藤 花子（キッチン / ¥1,250）</option>
+                  <option>鈴木 一郎（レジ / ¥1,150）</option>
+                  <option>山本 みき（キッチン / ¥1,200）</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="date">日付</label>
+                <input id="date" name="date" type="date" value="2026-07-02" />
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label for="start">開始時刻</label>
+                  <input id="start" name="start" type="time" value="18:00" />
+                </div>
+                <div class="field">
+                  <label for="end">終了時刻</label>
+                  <input id="end" name="end" type="time" value="22:00" />
+                </div>
+              </div>
+              <div class="field">
+                <label for="role">役割</label>
+                <select id="role" name="role">
+                  <option>ホール</option><option>キッチン</option><option>レジ</option><option>洗い場</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="memo">メモ（任意）</label>
+                <textarea id="memo" name="memo" rows="3" placeholder="引き継ぎ事項など"></textarea>
+              </div>
+              <label class="checkrow"><input type="checkbox" /> 作成後すぐにスタッフへ通知する</label>
+              <div style="display:flex;gap:12px">
+                <button type="submit" class="btn btn-primary">シフトを作成</button>
+                <a href="shifts.html" class="btn btn-ghost">キャンセル</a>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel" style="margin-bottom:16px">
+            <div class="panel-head"><h2>この枠の希望者</h2></div>
+            <div class="panel-body" style="padding-top:10px">
+              <div class="who" style="padding:8px 0;border-bottom:1px solid var(--line)"><span class="av" style="background:var(--coral)">田</span><div><b>田中 太郎</b><div class="muted">この時間帯を希望</div></div></div>
+              <div class="who" style="padding:8px 0"><span class="av" style="background:var(--violet)">鈴</span><div><b>鈴木 一郎</b><div class="muted">前後なら可</div></div></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h2>人件費の目安</h2></div>
+            <div class="panel-body">
+              <div style="display:flex;justify-content:space-between;padding:6px 0"><span class="muted">この枠</span><b class="mono">¥4,800</b></div>
+              <div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--line)"><span class="muted">本日合計</span><b class="mono">¥31,200</b></div>
+              <div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid var(--line)"><span class="muted">今週合計</span><b class="mono" style="color:var(--mint)">¥386,400</b></div>
+              <p class="muted" style="margin:10px 0 0">予算 ¥420,000 に対して 92% — 予算内です。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

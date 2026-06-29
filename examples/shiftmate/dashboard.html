@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ダッシュボード — シフトメイト</title>
+<link rel="stylesheet" href="assets/app.css" />
+</head>
+<body>
+<div class="app">
+  <!-- サイドバー -->
+  <aside class="side">
+    <a href="index.html" class="brand"><span class="dot">S</span>シフトメイト</a>
+    <div class="navlabel">メニュー</div>
+    <a href="dashboard.html" class="active"><span class="ic">▦</span> ダッシュボード</a>
+    <a href="shifts.html"><span class="ic">🗓</span> シフト</a>
+    <a href="staff.html"><span class="ic">👥</span> スタッフ</a>
+    <a href="settings.html"><span class="ic">⚙</span> 設定</a>
+    <div class="side-foot">
+      <div class="avatar">田</div>
+      <div><div style="color:#fff;font-weight:700;font-size:13px">田中 太郎</div><div style="font-size:11px;color:#8a8ea6">まるごとカフェ 渋谷店</div></div>
+    </div>
+  </aside>
+
+  <!-- メイン -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1>ダッシュボード</h1>
+        <div class="sub">今週の状況 — 6月29日(月) 〜 7月5日(日)</div>
+      </div>
+      <div class="spacer"></div>
+      <input class="search" placeholder="スタッフ・シフトを検索…" />
+      <a href="shift-new.html" class="btn btn-primary btn-sm">＋ シフトを追加</a>
+    </div>
+
+    <div class="content">
+      <!-- 統計 -->
+      <div class="stats">
+        <div class="stat"><div class="sl">今週の総シフト</div><div class="sv">42</div><div class="sd up">▲ 先週 +6</div></div>
+        <div class="stat"><div class="sl">未充足の枠</div><div class="sv">3</div><div class="sd down">要対応</div></div>
+        <div class="stat"><div class="sl">予定人件費</div><div class="sv">¥38.6万</div><div class="sd up">予算内</div></div>
+        <div class="stat"><div class="sl">希望提出</div><div class="sv">11<span style="font-size:15px;color:var(--ink-3)">/12</span></div><div class="sd down">1名 未提出</div></div>
+      </div>
+
+      <!-- 週カレンダー -->
+      <div class="panel" style="margin-bottom:20px">
+        <div class="panel-head">
+          <h2>今週のシフト表</h2>
+          <div class="tabs" style="margin-left:14px"><a class="active">週</a><a>日</a><a>月</a></div>
+          <div class="spacer"></div>
+          <a href="shifts.html" class="btn btn-ghost btn-sm">一覧で見る</a>
+        </div>
+        <div class="panel-body">
+          <div class="cal">
+            <div class="day"><div class="dh"><span>月</span><b>29</b></div>
+              <div class="ev c1"><span class="t">09:00–15:00</span>田中</div><div class="ev c2"><span class="t">15:00–22:00</span>佐藤</div></div>
+            <div class="day"><div class="dh"><span>火</span><b>30</b></div>
+              <div class="ev c3"><span class="t">09:00–17:00</span>鈴木</div></div>
+            <div class="day"><div class="dh"><span>水</span><b>1</b></div>
+              <div class="ev c1"><span class="t">09:00–15:00</span>田中</div><div class="ev c4"><span class="t">17:00–22:00</span>山本</div></div>
+            <div class="day"><div class="dh"><span>木</span><b>2</b></div>
+              <div class="ev c2"><span class="t">10:00–22:00</span>佐藤</div></div>
+            <div class="day"><div class="dh"><span>金</span><b>3</b></div>
+              <div class="ev c3"><span class="t">09:00–15:00</span>鈴木</div><div class="ev c1"><span class="t">15:00–22:00</span>田中</div></div>
+            <div class="day"><div class="dh"><span>土</span><b>4</b></div>
+              <div class="ev c4"><span class="t">09:00–15:00</span>山本</div><div class="ev c2"><span class="t">15:00–22:00</span>佐藤</div></div>
+            <div class="day"><div class="dh"><span>日</span><b>5</b></div>
+              <div class="ev c1"><span class="t">10:00–20:00</span>田中</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <!-- 未充足 -->
+        <div class="panel">
+          <div class="panel-head"><h2>対応が必要な枠</h2><div class="spacer"></div><span class="badge coral">3件</span></div>
+          <table class="tbl">
+            <thead><tr><th>日付</th><th>時間帯</th><th>役割</th><th></th></tr></thead>
+            <tbody>
+              <tr><td>7/2(木)</td><td class="mono">18:00–22:00</td><td>ホール</td><td><a href="shift-new.html" class="btn btn-ghost btn-sm">割当</a></td></tr>
+              <tr><td>7/4(土)</td><td class="mono">09:00–13:00</td><td>キッチン</td><td><a href="shift-new.html" class="btn btn-ghost btn-sm">割当</a></td></tr>
+              <tr><td>7/5(日)</td><td class="mono">15:00–20:00</td><td>レジ</td><td><a href="shift-new.html" class="btn btn-ghost btn-sm">割当</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- 今日の出勤 -->
+        <div class="panel">
+          <div class="panel-head"><h2>本日の出勤</h2><div class="spacer"></div><span class="muted">4名</span></div>
+          <div class="panel-body" style="padding-top:8px">
+            <div class="who" style="padding:9px 0;border-bottom:1px solid var(--line)"><span class="av" style="background:var(--coral)">田</span><div><b>田中 太郎</b><div class="muted mono">09:00 – 15:00</div></div></div>
+            <div class="who" style="padding:9px 0;border-bottom:1px solid var(--line)"><span class="av" style="background:var(--mint)">佐</span><div><b>佐藤 花子</b><div class="muted mono">15:00 – 22:00</div></div></div>
+            <div class="who" style="padding:9px 0;border-bottom:1px solid var(--line)"><span class="av" style="background:var(--violet)">鈴</span><div><b>鈴木 一郎</b><div class="muted mono">休憩中 · 戻り 14:00</div></div></div>
+            <div class="who" style="padding:9px 0"><span class="av" style="background:var(--butter);color:#5a4300">山</span><div><b>山本 みき</b><div class="muted mono">17:00 – 22:00</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
