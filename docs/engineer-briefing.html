@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>操作マニュアル自動生成ツール — エンジニア向け技術ブリーフィング</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#13161b; --bg2:#191d24; --panel:#1e232c; --panel2:#232934;
+    --ink:#eef1f5; --ink-soft:#aab3bf; --ink-faint:#6c7681; --line:#2b323d; --line2:#3a434f;
+    --teal:#36d6b2; --teal-d:#1f9c81; --amber:#f4b860; --rose:#f0897a; --sky:#7fb6f0;
+    --mono:"JetBrains Mono",ui-monospace,monospace; --serif:"Shippori Mincho",serif; --sans:"Zen Kaku Gothic New",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden}
+  body{font-family:var(--sans);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+  /* 背景の微細グリッド＋グロー */
+  body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(900px 600px at 85% -10%, rgba(54,214,178,.10), transparent 60%),
+      radial-gradient(700px 500px at -5% 110%, rgba(127,182,240,.08), transparent 60%),
+      linear-gradient(transparent 31px, rgba(255,255,255,.018) 32px),
+      linear-gradient(90deg, transparent 31px, rgba(255,255,255,.018) 32px);
+    background-size:auto,auto,33px 33px,33px 33px}
+
+  /* デッキ */
+  .deck{display:flex;height:100vh;width:100vw;transition:transform .55s cubic-bezier(.6,.05,.2,1);position:relative;z-index:1}
+  .slide{min-width:100vw;height:100vh;overflow-y:auto;padding:64px 7vw 96px;display:flex;flex-direction:column;justify-content:center}
+  .slide-inner{max-width:1000px;width:100%;margin:0 auto}
+
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.28em;color:var(--teal);text-transform:uppercase;margin-bottom:18px}
+  h1{font-family:var(--serif);font-weight:700;font-size:clamp(30px,5.2vw,58px);line-height:1.18;margin:0 0 18px;letter-spacing:.01em}
+  h2{font-family:var(--serif);font-weight:700;font-size:clamp(24px,3.6vw,40px);line-height:1.25;margin:0 0 22px}
+  .lead{font-size:clamp(15px,1.7vw,19px);color:var(--ink-soft);line-height:1.85;max-width:760px}
+  strong{color:var(--ink);font-weight:700}
+  .teal{color:var(--teal)}.amber{color:var(--amber)}.rose{color:var(--rose)}.sky{color:var(--sky)}
+  code{font-family:var(--mono);font-size:.86em;background:var(--panel2);border:1px solid var(--line);padding:1px 7px;border-radius:6px;color:var(--teal)}
+
+  /* 部品 */
+  .grid{display:grid;gap:16px}
+  .g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:820px){.g2,.g3{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+  .card h3{font-family:var(--sans);font-weight:700;font-size:15px;margin:0 0 8px;display:flex;align-items:center;gap:9px}
+  .card p{margin:0;font-size:13.5px;color:var(--ink-soft);line-height:1.75}
+  .tag{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--line2);color:var(--ink-soft)}
+  .tag.ok{color:var(--teal);border-color:rgba(54,214,178,.4);background:rgba(54,214,178,.08)}
+  .tag.warn{color:var(--amber);border-color:rgba(244,184,96,.4);background:rgba(244,184,96,.08)}
+  .tag.no{color:var(--rose);border-color:rgba(240,137,122,.4);background:rgba(240,137,122,.08)}
+
+  /* フロー */
+  .flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}
+  .fnode{flex:1;min-width:130px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 12px;text-align:center;position:relative}
+  .fnode .fi{font-family:var(--mono);font-size:11px;color:var(--teal);margin-bottom:6px}
+  .fnode .ft{font-size:13.5px;font-weight:700}
+  .fnode .fd{font-size:11.5px;color:var(--ink-faint);margin-top:3px}
+  .farr{display:flex;align-items:center;color:var(--line2);font-size:20px;padding:0 6px}
+  @media(max-width:820px){.farr{transform:rotate(90deg)}}
+
+  /* 表 */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--ink-faint);text-transform:uppercase;font-weight:600}
+  td .m{font-family:var(--mono);font-size:12px}
+  tr td:first-child{font-weight:700}
+  .yes{color:var(--teal)}.partial{color:var(--amber)}.nope{color:var(--rose)}
+
+  /* CORS図 */
+  .corsfig{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:8px}
+  .box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:13px;min-width:120px}
+  .box .bl{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.1em}
+  .guard{border-color:var(--rose);color:var(--rose)}
+  .barrier{font-family:var(--mono);color:var(--rose);font-size:13px;text-align:center}
+
+  /* 決定リスト */
+  .decision{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--amber);border-radius:0 12px 12px 0;padding:14px 18px;margin-bottom:12px}
+  .decision .q{font-weight:700;font-size:14.5px;margin-bottom:4px}
+  .decision .o{font-size:12.5px;color:var(--ink-soft);font-family:var(--mono)}
+  .decision .o b{color:var(--teal)}
+
+  ul.clean{margin:6px 0 0;padding:0 0 0 2px;list-style:none}
+  ul.clean li{position:relative;padding-left:20px;margin:9px 0;font-size:14.5px;color:var(--ink-soft);line-height:1.7}
+  ul.clean li::before{content:"▸";position:absolute;left:0;color:var(--teal)}
+
+  /* ナビ */
+  .topbar{position:fixed;top:0;left:0;right:0;height:4px;z-index:20;background:var(--line)}
+  .topbar .fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--sky));transition:width .4s}
+  .hud{position:fixed;z-index:20;bottom:22px;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:18px;pointer-events:none}
+  .dots{display:flex;gap:8px;pointer-events:auto}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--line2);border:none;cursor:pointer;padding:0;transition:.2s}
+  .dot.active{background:var(--teal);transform:scale(1.35)}
+  .navbtn{pointer-events:auto;background:var(--panel);border:1px solid var(--line2);color:var(--ink);width:38px;height:38px;border-radius:10px;cursor:pointer;font-size:16px;transition:.15s}
+  .navbtn:hover{border-color:var(--teal);color:var(--teal)}
+  .counter{position:fixed;top:20px;right:26px;z-index:20;font-family:var(--mono);font-size:12px;color:var(--ink-faint)}
+  .brandmark{position:fixed;top:18px;left:26px;z-index:20;font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--ink-faint);text-transform:uppercase}
+  .kbd{font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="fill" id="progress"></div></div>
+<div class="brandmark">Manual-Gen / Tech Brief</div>
+<div class="counter"><span id="cur">01</span> / <span id="total">10</span></div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 表紙 -->
+  <section class="slide">
+    <div class="slide-inner">
+      <div class="eyebrow">Engineering Briefing</div>
+      <h1>操作マニュアル<br>自動生成ツール</h1>
+      <p class="lead">URL を渡すと、サイトの操作マニュアル(HTML)を自動生成する。<br>
+        本資料は<strong>アーキテクチャ・技術的制約・これから決めること</strong>をエンジニア向けに整理したものです。</p>
+      <p class="lead" style="margin-top:24px;font-family:var(--mono);font-size:13px;color:var(--ink-faint)">
+        ← → / Space でスライド移動　·　全 10 枚</p>
+    </div>
+  </section>
+
+  <!-- 2 何を作るか -->
+  <section class="slide">
+    <div class="slide-inner">
+      <div class="eyebrow">01 — What</div>
+      <h2>一言でいうと</h2>
+      <p class="lead" style="margin-bottom:30px"><strong class="teal">サイトを自動で「歩いて」操作を再現し、スクショ付きのマニュアルHTMLを吐く</strong>ツール。
+        人手のドキュメント作成を、URL 入力ひとつに置き換える。</p>
+      <div class="flow">
+        <div class="fnode"><div class="fi">routes</div><div class="ft">リンク抽出</div><div class="fd">サイト内URLを収集</div></div>
+        <div class="farr">→</div>
+        <div class="fnode"><div class="fi">scenario</div><div class="ft">シナリオ生成</div><div class="fd">Geminiが操作手順を設計</div></div>
+        <div class="farr">→</div>
+        <div class="fnode"><div class="fi">steps</div><div class="ft">撮影/再現</div><div class="fd">各手順をスクショ化</div></div>
+        <div class="farr">→</div>
+        <div class="fnode"><div class="fi">manual</div><div class="ft">マニュアル生成</div><div class="fd">説明文＋画像をHTMLに</div></div>
+      </div>
+      <p class="lead" style="margin-top:24px;font-size:14px">この4段の処理フローは<strong>全フェーズで共通</strong>。違いは「どこで・どう実行するか」だけ。</p>
+    </div>
+  </section>
+
+  <!-- 3 ロードマップ -->
+  <section class="slide">
+    <div class="slide-inner">
+      <div class="eyebrow">02 — Roadmap</div>
+      <h2>3フェーズ構成</h2>
+      <div class="grid g3">
+        <div class="card">
+          <h3><span class="tag ok">実装済</span> フェーズ①</h3>
+          <p><strong>Gemini Canvas 版</strong>（単一HTML）。ブラウザ内で完結する動く骨格。スクショはダミー。<br><br>
+          <span class="amber">役割:</span> データ契約の確定とデモ。</p>
+        </div>
+        <div class="card">
+          <h3><span class="tag ok">実装済</span> フェーズ②</h3>
+          <p><strong>ブラウザアプリ版</strong>（フロント＋Nodeサーバー）。<span class="teal">実 Playwright</span> で巡回・実スクショ・ログ取得。<br><br>
+          <span class="amber">役割:</span> 本番品質のエンジン。</p>
+        </div>
+        <div class="card">
+          <h3><span class="tag warn">設計中</span> フェーズ③</h3>
+          <p><strong>CLI + MCP 版</strong>。②のエンジンを core 化し、AIエージェントやCIから自律的に呼べる部品に。<br><br>
+          <span class="amber">役割:</span> 自動化・組み込み。</p>
+        </div>
+      </div>
+      <p class="lead" style="margin-top:24px;font-size:14px">①②は実装・検証済み（PRオープン）。<strong>③に進むか、②を磨くかが目下の分岐。</strong></p>
+    </div>
+  </section>
+
+  <!-- 4 CORS -->
+  <section class="slide">
+    <div class="slide-inner">
+      <div class="eyebrow">03 — Core Constraint</div>
+      <h2>なぜ Canvas は外部サイトを<br>直接取得できないのか</h2>
+      <p class="lead" style="margin-bottom:22px">ブラウザの<strong>同一オリジンポリシー（CORS）</strong>。
+        ページのJSは原則<strong class="teal">自分のサイト</strong>からしかデータを取れない。Canvas はブラウザ内で動くため、この制約をそのまま受ける。</p>
+      <div class="corsfig">
+        <div class="box"><div class="bl">あなたのコード</div>Canvas内のJS</div>
+        <div class="farr" style="color:var(--rose)">→</div>
+        <div class="box guard"><div class="bl">警備員 = CORS</div>他サイトは遮断</div>
+        <div class="barrier">✕ blocked</div>
+        <div class="box"><div class="bl">外部サイト</div>members.co.jp</div>
+      </div>
+      <p class="lead" style="margin-top:22px;font-size:14px"><strong class="amber">なぜ存在する?</strong> 悪意あるページが、裏であなたのログイン中のGmailや銀行を読むのを防ぐため。<strong>あなたを守るルール</strong>であり、無効化はできない。</p>
+      <p class="lead" style="margin-top:10px;font-size:13.5px;color:var(--ink-faint)">→ サーバー（Node）には警備員がいない。だから「自前サーバーが取りに行く」フェーズ②は URL だけで巡回できる。</p>
+    </div>
+  </section>
+
+  <!-- 5 取得方法の比較 -->
+  <section class="slide">
+    <div class="slide-inner">
+      <div class="eyebrow">04 — Canvas 以外も含む</div>
+      <h2>コンテンツ取得 5方式の比較</h2>
+      <table>
+        <thead><tr><th>方式</th><th>実行場所</th><th>外部URL</th><th>JS描画SPA</th><th>第三者経由</th><th>向き</th></tr></thead>
+        <tbody>
+          <tr><td>URL 直接 fetch</td><td class="m">ブラウザ/Canvas</td><td class="nope">✕ CORS</td><td class="nope">✕</td><td class="yes">なし</td><td>同一オリジンのみ</td></tr>
+          <tr><td>CORS プロキシ</td><td class="m">ブラウザ/Canvas</td><td class="partial">△ 静的のみ</td><td class="nope">✕</td><td class="nope">あり</td><td>公開サイトのデモ</td></tr>
+          <tr><td>HTML 貼り付け</td><td class="m">ブラウザ/Canvas</td><td class="partial">△ 手作業</td><td class="partial">△</td><td class="yes">なし</td><td>1ページ確認</td></tr>
+          <tr><td>ローカルファイル選択</td><td class="m">ブラウザ/Canvas</td><td class="yes">✓ 手元</td><td class="nope">✕</td><td class="yes">なし</td><td>ビルド済み一式</td></tr>
+          <tr><td class="teal">サーバー側 Playwright</td><td class="m">Node サーバー</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">なし</td><td><strong>本命・URLだけ</strong></td></tr>
+        </tbody>
+      </table>
+      <p class="lead" style="margin-top:20px;font-size:13.5px">Canvas で動くのは上4つ。<strong>本格的にやるなら最下段（サーバー実行＝フェーズ②/③）</strong>が唯一すべて○。</p>
+    </div>
+  </section>
+
+  <!-- 6 データ契約 -->
+  <section class="slide">
+    <div class="slide-inner">
+      <div class="eyebrow">05 — The Invariant</div>
+      <h2>不変の土台：データ契約</h2>
+      <p class="lead" style="margin-bottom:22px">3フェーズが依存する共通の型。<strong>キー名・構造は絶対に変えない</strong>。新機能は常に「追加」であって「変更」にしない。<code>src/shared/types.js</code> に集約。</p>
+      <div class="grid g3">
+        <div class="card"><h3 class="teal">routes</h3><p class="m" style="font-family:var(--mono);font-size:12px">origin<br>routes[]<br>· url / title / depth</p><p style="margin-top:8px">巡回で見つけたページ一覧</p></div>
+        <div class="card"><h3 class="teal">scenario</h3><p class="m" style="font-family:var(--mono);font-size:12px">baseUrl<br>steps[]<br>· id/name/url<br>· actions[] (click/fill/<br>&nbsp;&nbsp;goto/wait)</p><p style="margin-top:8px">AIが設計した操作手順（編集可）</p></div>
+        <div class="card"><h3 class="teal">steps</h3><p class="m" style="font-family:var(--mono);font-size:12px">steps[]<br>· screenshotBefore/After<br>· highlight (x,y,w,h)<br>· consoleLogs / status</p><p style="margin-top:8px">撮影結果。①ダミー→②実データ</p></div>
+      </div>
+      <p class="lead" style="margin-top:22px;font-size:13.5px">フェーズ②は <code>steps</code> の画像・ハイライト・ログを<strong>ダミーから実 Playwright のデータに差し替えた</strong>だけ。契約が同じなので地続きで進化する。</p>
+    </div>
+  </section>
+
+  <!-- 7 決めること① -->
+  <section class="slide">
+    <div class="slide-inner">
+      <div class="eyebrow">06 — Decisions (1/2)</div>
+      <h2>決めなきゃいけないこと</h2>
+      <div class="decision"><div class="q">A. 主軸の配信形態は？</div><div class="o">Canvas単体 / <b>ローカル実行アプリ</b> / 常駐サーバー / CLI・MCP　— 誰がどう使う？</div></div>
+      <div class="decision"><div class="q">B. APIキーの置き場所</div><div class="o">フロント（手軽・露出リスク） vs <b>サーバーenv（安全）</b>　— ②は後者で実装済み</div></div>
+      <div class="decision"><div class="q">C. 外部サイトの取得手段</div><div class="o">CORSプロキシ（第三者経由・静的のみ） vs <b>自前サーバーPlaywright（全部○）</b></div></div>
+      <div class="decision"><div class="q">D. SPA（JS描画サイト）対応は必要？</div><div class="o">必要なら<b>サーバー/ローカルでの実ブラウザ実行が必須</b>（ファイル読みでは不可）</div></div>
+      <p class="lead" style="margin-top:14px;font-size:13px;color:var(--ink-faint)">※ <b>太字</b>＝現状の推奨／実装済みの選択。</p>
+    </div>
+  </section>
+
+  <!-- 8 決めること② -->
+  <section class="slide">
+    <div class="slide-inner">
+      <div class="eyebrow">06 — Decisions (2/2)</div>
+      <h2>決めること（つづき）</h2>
+      <div class="decision"><div class="q">E. 認証付きサイトに対応する？</div><div class="o">対応するなら<b>ローカル/サーバー実行</b>＋認証情報の受け渡し設計が必要</div></div>
+      <div class="decision"><div class="q">F. スクショの品質ライン</div><div class="o">ダミー（①） vs <b>実Playwright・操作前後ペア＋赤枠ハイライト（②）</b>　— 撮影安定化の作り込み量</div></div>
+      <div class="decision"><div class="q">G. 配布する成果物の形式</div><div class="o"><b>html（単一）</b> / zip（画像分離） / site（複数ページ静的）　— どれを出す？</div></div>
+      <div class="decision"><div class="q">H. 安全装置のデフォルト強度</div><div class="o">robots.txt尊重 / <b>破壊的操作の抑止</b> / 許可ドメインallowlist / 巡回上限　— どこまで堅く</div></div>
+      <div class="decision"><div class="q">I. 運用形態</div><div class="o"><b>ローカル実行（npm start）</b> vs Playwright公式Dockerで常駐</div></div>
+    </div>
+  </section>
+
+  <!-- 9 推奨 -->
+  <section class="slide">
+    <div class="slide-inner">
+      <div class="eyebrow">07 — Recommendation</div>
+      <h2>推奨ルートと次の一手</h2>
+      <div class="grid g2">
+        <div class="card" style="border-left:3px solid var(--teal)">
+          <h3 class="teal">本命は「サーバー実行」</h3>
+          <ul class="clean" style="margin-top:4px">
+            <li>URLだけで巡回・SPA・認証すべてに強い</li>
+            <li>APIキーをサーバーに隔離でき安全</li>
+            <li>＝ フェーズ② が既にこの形</li>
+          </ul>
+        </div>
+        <div class="card" style="border-left:3px solid var(--sky)">
+          <h3 class="sky">Canvasは「軽いデモ/手元」用</h3>
+          <ul class="clean" style="margin-top:4px">
+            <li>サーバー不要で配りやすい</li>
+            <li>ローカルファイル / HTML貼付で十分</li>
+            <li>外部URLはプロキシ頼みで限界あり</li>
+          </ul>
+        </div>
+      </div>
+      <h3 style="font-family:var(--sans);font-size:16px;margin:26px 0 8px">次の一手の候補</h3>
+      <ul class="clean">
+        <li><strong>フェーズ③へ</strong>：core を切り出して CLI＋MCP化（CIや Claude から呼べる部品に）</li>
+        <li><strong>②を磨く</strong>：実キーで一気通貫テスト・撮影品質・大規模サイトのレート制御</li>
+        <li><strong>配布形態の決定</strong>：社内ツールとして npm 起動 or Docker 常駐</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 10 まとめ -->
+  <section class="slide">
+    <div class="slide-inner">
+      <div class="eyebrow">08 — Summary</div>
+      <h2>まとめ</h2>
+      <ul class="clean" style="font-size:16px">
+        <li>処理は <code>routes→scenario→steps→manual</code> の4段。<strong>データ契約は不変</strong>。</li>
+        <li>Canvas が外部URLを直接取れないのは <strong>CORS（安全のための仕様）</strong>。回避はプロキシ/ローカル/サーバー。</li>
+        <li>Canvas以外を含め取得は<strong>5方式</strong>。全部○なのは<strong class="teal">サーバー側 Playwright</strong>だけ。</li>
+        <li>主要な意思決定は <strong>配信形態・APIキー・外部取得・SPA/認証・スクショ・DL形式・安全装置・運用</strong>。</li>
+        <li>①②は実装/検証済み。<strong>分岐は「③に進む」か「②を磨く」か。</strong></li>
+      </ul>
+      <p class="lead" style="margin-top:30px;font-family:var(--mono);font-size:13px;color:var(--teal)">Questions &amp; Discussion →</p>
+    </div>
+  </section>
+
+</div>
+
+<div class="hud">
+  <button class="navbtn" id="prev" aria-label="前へ">←</button>
+  <div class="dots" id="dots"></div>
+  <button class="navbtn" id="next" aria-label="次へ">→</button>
+</div>
+
+<script>
+  const deck=document.getElementById("deck");
+  const slides=[...deck.children];
+  const dotsWrap=document.getElementById("dots");
+  let i=0;
+  document.getElementById("total").textContent=String(slides.length).padStart(2,"0");
+  slides.forEach((_,n)=>{const b=document.createElement("button");b.className="dot";b.addEventListener("click",()=>go(n));dotsWrap.appendChild(b);});
+  const dots=[...dotsWrap.children];
+  function go(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    deck.style.transform=`translateX(-${i*100}vw)`;
+    dots.forEach((d,k)=>d.classList.toggle("active",k===i));
+    document.getElementById("cur").textContent=String(i+1).padStart(2,"0");
+    document.getElementById("progress").style.width=((i+1)/slides.length*100)+"%";
+  }
+  document.getElementById("next").addEventListener("click",()=>go(i+1));
+  document.getElementById("prev").addEventListener("click",()=>go(i-1));
+  window.addEventListener("keydown",(e)=>{
+    if(e.key==="ArrowRight"||e.key===" "||e.key==="PageDown"){e.preventDefault();go(i+1);}
+    else if(e.key==="ArrowLeft"||e.key==="PageUp"){e.preventDefault();go(i-1);}
+    else if(e.key==="Home"){go(0);} else if(e.key==="End"){go(slides.length-1);}
+  });
+  let sx=null;
+  window.addEventListener("touchstart",e=>sx=e.touches[0].clientX,{passive:true});
+  window.addEventListener("touchend",e=>{if(sx==null)return;const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>60)go(i+(dx<0?1:-1));sx=null;});
+  go(0);
+</script>
+</body>
+</html>
