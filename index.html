@@ -225,7 +225,7 @@
       <div id="urlMode">
         <label>起点 URL</label>
         <input id="startUrl" type="text" placeholder="https://example.com/" />
-        <div class="hint">ブラウザの CORS 制約により取得できないサイトがあります。取得に失敗する場合は「HTML を貼り付け」をご利用ください（フェーズ②でサーバー側の実巡回に置き換えます）。</div>
+        <div class="hint">本フェーズでは外部サイトの直接取得はブラウザの CORS 制約により多くのサイトで行えません。その場合は「HTML を貼り付け」モードをご利用ください。URL を渡すだけの巡回はフェーズ②（サーバー側取得）で対応します。</div>
       </div>
       <div id="htmlMode" style="display:none">
         <label>オリジン <span class="opt">（例: https://example.com）</span></label>
@@ -581,8 +581,15 @@ async function runPipeline() {
       if (!startUrl) throw new Error("起点 URL を入力してください。");
       origin = new URL(startUrl).origin;
       setStatus("Web ページを取得しています…", "running"); logStart(`URL 取得を試行: ${startUrl}`);
-      try { const res = await fetch(startUrl, { mode: "cors" }); html = await res.text(); logOk(`HTML 取得成功 (${html.length.toLocaleString()} bytes)`); }
-      catch (e) { throw new Error(`URL の取得に失敗しました（CORS 制約の可能性）: ${e.message}。「HTML を貼り付け」をご利用ください。`); }
+      let fetched = false;
+      try { const res = await fetch(startUrl, { mode: "cors" }); html = await res.text(); fetched = true; logOk(`HTML 取得成功 (${html.length.toLocaleString()} bytes)`); }
+      catch (e) { /* 外部サイトの CORS 制約。フェーズ①では想定内のため、エラー扱いにせず案内する。 */ }
+      if (!fetched) {
+        logWarn("このフェーズでは外部サイトの直接取得は行えません（ブラウザの CORS 制約による想定内の挙動です）。");
+        logWarn("→「HTML を貼り付け」モードに切り替えてご利用ください。URL を渡すだけの巡回はフェーズ②（サーバー側取得）で対応します。");
+        setStatus("外部サイトの直接取得は CORS 制約のため不可。「HTML を貼り付け」をご利用ください。", null);
+        return; // finally で実行ボタンは再有効化される
+      }
     } else {
       origin = $("originInput").value.trim(); html = $("htmlInput").value;
       if (!origin) throw new Error("オリジンを入力してください。");
