@@ -202,3 +202,88 @@ h1.hero-h em{font-style:normal;color:var(--coral);position:relative;white-space:
 .grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:20px}
 @media(max-width:980px){.grid2{grid-template-columns:1fr}}
 .muted{color:var(--ink-3);font-size:13px}
+
+/* =================================================================================
+ * 実在SaaS風コンポーネント（ランディング強化）
+ * ================================================================================= */
+/* ヒーロー: ブラウザ・モック */
+.mock{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 30px 70px -40px rgba(26,28,46,.55);overflow:hidden;transform:perspective(1400px) rotateY(-7deg) rotateX(2deg) rotate(.3deg)}
+.mock-bar{display:flex;align-items:center;gap:8px;padding:11px 14px;background:var(--bg-2);border-bottom:1px solid var(--line)}
+.dots3{display:flex;gap:6px}.dots3 i{width:10px;height:10px;border-radius:50%;display:block}
+.dots3 i:nth-child(1){background:#ff5f57}.dots3 i:nth-child(2){background:#febc2e}.dots3 i:nth-child(3){background:#28c840}
+.mock-url{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:4px 10px;font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align:center}
+.mock-body{padding:16px;display:grid;grid-template-columns:54px 1fr;gap:12px;background:var(--bg)}
+.mock-side{background:var(--ink);border-radius:10px;padding:10px 6px;display:flex;flex-direction:column;gap:8px;align-items:center}
+.mock-side .mi{width:24px;height:24px;border-radius:7px;background:#2c2f48}.mock-side .mi.on{background:var(--coral)}
+.mock-main{display:flex;flex-direction:column;gap:10px}
+.mock-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mtile{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:9px}
+.mtile .l{font-size:9px;color:var(--ink-3)}.mtile .v{font-family:var(--disp);font-weight:800;font-size:16px}
+.mock-chart{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:10px;display:flex;align-items:flex-end;gap:5px;height:78px}
+.mock-chart i{flex:1;background:linear-gradient(180deg,var(--coral),#ffb39e);border-radius:4px 4px 0 0;display:block}
+.mock-row{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:8px 10px;display:flex;align-items:center;gap:8px;font-size:10px;color:var(--ink-2)}
+.mock-row .av{width:18px;height:18px;border-radius:5px;background:var(--mint)}
+
+/* 数字バンド */
+.statband{background:var(--ink);color:#fff}
+.statband-in{max-width:1160px;margin:0 auto;padding:40px 24px;display:grid;grid-template-columns:repeat(4,1fr);gap:24px;text-align:center}
+@media(max-width:760px){.statband-in{grid-template-columns:1fr 1fr;gap:30px 16px}}
+.statband .n{font-family:var(--disp);font-weight:800;font-size:clamp(28px,4vw,42px);color:var(--coral);line-height:1}
+.statband .n em{font-style:normal;font-size:.5em;color:#fff;margin-left:2px}
+.statband .c{font-size:13px;color:#a7abc0;margin-top:6px}
+
+/* ロゴクラウド */
+.cloud{text-align:center;padding:48px 24px}
+.cloud .ct{font-size:13px;color:var(--ink-3);margin-bottom:18px}
+.cloud .cl{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 34px;align-items:center}
+.cloud .cl b{font-family:var(--disp);font-weight:700;font-size:18px;color:var(--ink-2);opacity:.65;letter-spacing:-.01em}
+
+/* 機能の行（交互） */
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;padding:46px 0}
+.frow.rev .ftext{order:2}
+@media(max-width:860px){.frow{grid-template-columns:1fr;gap:24px}.frow.rev .ftext{order:0}}
+.frow .ftag{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--coral-d);text-transform:uppercase}
+.frow h3{font-family:var(--disp);font-weight:800;font-size:clamp(22px,3vw,30px);letter-spacing:-.02em;margin:10px 0 12px}
+.frow p{color:var(--ink-2);font-size:15px;margin:0 0 16px}
+.frow ul{list-style:none;padding:0;margin:0}.frow li{padding:5px 0;font-size:14px;color:var(--ink-2);display:flex;gap:9px}.frow li::before{content:"✓";color:var(--mint);font-weight:700}
+.fvisual{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px;min-height:220px}
+
+/* お客様の声 */
+.testis{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:860px){.testis{grid-template-columns:1fr}}
+.testi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px;box-shadow:var(--shadow-sm)}
+.testi .stars{color:var(--butter);font-size:14px;letter-spacing:2px}
+.testi q{display:block;font-size:14.5px;color:var(--ink);margin:12px 0 18px;line-height:1.8}
+.testi .who{display:flex;align-items:center;gap:10px}
+.testi .who .av{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:#fff;font-weight:700;font-family:var(--disp)}
+.testi .who b{font-size:14px}.testi .who div{font-size:12px;color:var(--ink-3)}
+
+/* FAQ */
+.faq{max-width:760px}
+.faq details{border-bottom:1px solid var(--line);padding:6px 0}
+.faq summary{cursor:pointer;list-style:none;padding:14px 0;font-weight:700;font-size:15.5px;display:flex;justify-content:space-between;align-items:center}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";font-family:var(--disp);font-weight:700;color:var(--coral);font-size:22px;transition:.2s}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq p{color:var(--ink-2);font-size:14px;margin:0 0 14px;padding-right:30px}
+
+/* CTAバンド */
+.ctaband{background:linear-gradient(120deg,var(--coral),#ff7d52);color:#fff;border-radius:22px;padding:46px;text-align:center;margin:24px 0;position:relative;overflow:hidden}
+.ctaband::after{content:"";position:absolute;width:300px;height:300px;border-radius:50%;background:rgba(255,255,255,.14);top:-120px;right:-60px}
+.ctaband h2{font-family:var(--disp);font-weight:800;font-size:clamp(26px,3.6vw,38px);margin:0 0 10px;position:relative}
+.ctaband p{margin:0 0 22px;opacity:.92;position:relative}
+.ctaband .btn{background:#fff;color:var(--coral-d);position:relative}.ctaband .btn:hover{background:#fff;transform:translateY(-2px)}
+
+/* チャート（ダッシュボード用） */
+.bars{display:flex;align-items:flex-end;gap:10px;height:160px;padding-top:10px}
+.bars .b{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.bars .b .bar{width:100%;max-width:34px;border-radius:6px 6px 0 0;background:linear-gradient(180deg,var(--coral),#ffb39e)}
+.bars .b.alt .bar{background:linear-gradient(180deg,var(--mint),#9be3d4)}
+.bars .b .bl{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+.legend{display:flex;gap:16px;font-size:12px;color:var(--ink-3)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
+
+/* 通知・トップバー補助 */
+.bell{position:relative;width:38px;height:38px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);display:grid;place-items:center;cursor:pointer}
+.bell::after{content:"";position:absolute;top:8px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--coral);border:2px solid var(--surface)}
+.crumb{font-size:12px;color:var(--ink-3)}.crumb b{color:var(--ink-2)}

@@ -26,11 +26,13 @@
   <div class="main">
     <div class="topbar">
       <div>
+        <div class="crumb"><b>まるごとカフェ 渋谷店</b> ／ ダッシュボード</div>
         <h1>ダッシュボード</h1>
         <div class="sub">今週の状況 — 6月29日(月) 〜 7月5日(日)</div>
       </div>
       <div class="spacer"></div>
       <input class="search" placeholder="スタッフ・シフトを検索…" />
+      <div class="bell" title="通知 3件">🔔</div>
       <a href="shift-new.html" class="btn btn-primary btn-sm">＋ シフトを追加</a>
     </div>
 
@@ -68,6 +70,30 @@
             <div class="day"><div class="dh"><span>日</span><b>5</b></div>
               <div class="ev c1"><span class="t">10:00–20:00</span>田中</div></div>
           </div>
+        </div>
+      </div>
+
+      <!-- 人件費トレンド -->
+      <div class="panel" style="margin-bottom:20px">
+        <div class="panel-head">
+          <h2>人件費トレンド（今週）</h2>
+          <div class="spacer"></div>
+          <div class="legend"><span><i style="background:var(--coral)"></i>予定</span><span><i style="background:var(--mint)"></i>実績</span></div>
+        </div>
+        <div class="panel-body">
+          <div class="bars">
+            <div class="b"><div class="bar" style="height:48%"></div><div class="bl">月</div></div>
+            <div class="b alt"><div class="bar" style="height:45%"></div><div class="bl">月</div></div>
+            <div class="b"><div class="bar" style="height:38%"></div><div class="bl">火</div></div>
+            <div class="b alt"><div class="bar" style="height:40%"></div><div class="bl">火</div></div>
+            <div class="b"><div class="bar" style="height:66%"></div><div class="bl">水</div></div>
+            <div class="b alt"><div class="bar" style="height:63%"></div><div class="bl">水</div></div>
+            <div class="b"><div class="bar" style="height:58%"></div><div class="bl">木</div></div>
+            <div class="b"><div class="bar" style="height:82%"></div><div class="bl">金</div></div>
+            <div class="b"><div class="bar" style="height:95%"></div><div class="bl">土</div></div>
+            <div class="b"><div class="bar" style="height:72%"></div><div class="bl">日</div></div>
+          </div>
+          <p class="muted" style="margin:10px 0 0">今週合計 <b class="mono" style="color:var(--mint)">¥386,400</b> / 予算 ¥420,000（92%・予算内）</p>
         </div>
       </div>
 
