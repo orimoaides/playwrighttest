@@ -13,222 +13,305 @@
  ───────────────────────────────────────────────────────────────────────────────
 
  [1] routes  ── <a href> 列挙（同一オリジンのみ）の結果
- {
-   "origin": "https://example.com",
-   "routes": [
-     { "url": "https://example.com/", "title": "トップ", "depth": 0 }
-   ]
- }
+ { "origin": "https://example.com",
+   "routes": [ { "url": "https://example.com/", "title": "トップ", "depth": 0 } ] }
 
  [2] scenario ── Gemini に responseSchema で生成させる「重要画面と操作」の列挙
- {
-   "baseUrl": "https://example.com",
-   "steps": [
-     {
-       "id": "step-01",
-       "name": "トップページ表示",
-       "description": "サイトの入口。主要メニューを確認する。",
-       "url": "https://example.com/",
-       "actions": [
-         { "type": "fill",  "selector": "#email", "value": "<sample>" },
-         { "type": "click", "selector": "button[type=submit]" }
-       ]
-     }
-   ]
- }
- ※ actions の type は click | fill | goto | wait のみ許可。空配列可。
+ { "baseUrl": "https://example.com",
+   "steps": [ { "id": "step-01", "name": "トップページ表示",
+                "description": "...", "url": "https://example.com/",
+                "actions": [ { "type": "fill", "selector": "#email", "value": "<sample>" },
+                             { "type": "click", "selector": "button[type=submit]" } ] } ] }
+   ※ actions の type は click | fill | goto | wait のみ許可。空配列可。
 
- [3] steps  ── フェーズ①は画像をダミー(placeholder://)で埋める。
-               フェーズ②で実 Playwright のスクショ/ログに差し替える。
- {
-   "steps": [
-     {
-       "id": "step-01",
-       "name": "トップページ表示",
-       "description": "...",
-       "url": "https://example.com/",
-       "action": "ページを開いて主要メニューを確認",
-       "screenshotBefore": "placeholder://before/step-01",
-       "screenshotAfter": "placeholder://after/step-01",
-       "highlight": null,
-       "consoleLogs": [],
-       "status": "ok"
-     }
-   ]
- }
+ [3] steps  ── フェーズ①は画像をダミー(placeholder://)で埋める。②で実Playwrightに差し替え。
+ { "steps": [ { "id": "step-01", "name": "...", "description": "...",
+                "url": "...", "action": "...",
+                "screenshotBefore": "placeholder://before/step-01",
+                "screenshotAfter": "placeholder://after/step-01",
+                "highlight": null, "consoleLogs": [], "status": "ok" } ] }
 
- ───────────────────────────────────────────────────────────────────────────────
- 処理フロー
- ───────────────────────────────────────────────────────────────────────────────
- [入力UI: 起点URL or 貼り付けHTML]
-   → extractRoutes()    : <a href> 列挙（同一オリジンのみ） → routes
-   → generateScenario() : Gemini 2.5 で scenario を生成（responseSchema で構造強制）
-   → runStepsMock()     : 実スクショの代わりにダミーで steps を生成（※後段で差し替え）
-   → generateManual()   : steps をステップ単位で説明文化 → 固定HTMLテンプレに結合
-   → [プレビュー表示] + [ダウンロード: manual.html / scenario.json / steps.json]
+ 処理フロー:
+   入力(URL/HTML) → extractRoutes() → generateScenario()[Gemini]
+                  → runStepsMock()[ダミー] → generateManual()[Gemini] → 出力
 ==================================================================================
 -->
 <html lang="ja">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>操作マニュアル自動生成ツール — フェーズ①プロトタイプ</title>
+<title>マニュアルめーかー — フェーズ①</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0f1220;
-    --panel: #1a1f35;
-    --panel2: #232a47;
-    --border: #303a63;
-    --text: #e7ebff;
-    --muted: #9aa4cf;
-    --accent: #6c8cff;
-    --accent2: #38d39f;
-    --warn: #ffcc66;
-    --err: #ff7a85;
-    --ok: #38d39f;
-    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    /* やわらかパステル・ぽってりテイスト */
+    --cream:   #fff7ee;
+    --cream2:  #fdeede;
+    --ink:     #4b4030;     /* 本文（こげ茶で可読性◎） */
+    --ink-soft:#8a7d68;
+    --peach:   #ff9e80;
+    --peach-d: #ff7d52;
+    --mint:    #6fd3b8;
+    --mint-d:  #38b894;
+    --sky:     #8ec5ff;
+    --butter:  #ffd66b;
+    --pink:    #ffb3c6;
+    --line:    #f0ddc6;
+    --white:   #fffdfa;
+    --shadow:  10px 10px 0 rgba(255, 158, 128, .14);
+    --shadow-sm: 5px 5px 0 rgba(120, 100, 70, .10);
+    --r: 22px;
+    --disp: "Mochiy Pop One", "Zen Maru Gothic", sans-serif;
+    --body: "Zen Maru Gothic", system-ui, sans-serif;
   }
   * { box-sizing: border-box; }
+  html, body { margin: 0; }
   body {
-    margin: 0; background: var(--bg); color: var(--text);
-    font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
-    line-height: 1.6;
+    font-family: var(--body); color: var(--ink); font-size: 15px; line-height: 1.85;
+    background:
+      radial-gradient(900px 500px at 12% -8%, #ffe9d6 0%, transparent 60%),
+      radial-gradient(800px 460px at 100% 0%, #e3fff4 0%, transparent 55%),
+      radial-gradient(700px 700px at 85% 100%, #ffeef4 0%, transparent 55%),
+      var(--cream);
+    background-attachment: fixed;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
   }
-  header {
-    padding: 20px 24px; border-bottom: 1px solid var(--border);
-    background: linear-gradient(180deg, #161b30, #11142400);
+  /* ふわっと浮かぶ装飾の丸 */
+  .blob { position: fixed; border-radius: 50%; filter: blur(2px); opacity: .5; z-index: 0; pointer-events: none; animation: float 9s ease-in-out infinite; }
+  .blob.b1 { width: 90px; height: 90px; background: var(--pink);  top: 14%; right: 6%; animation-delay: -1s; }
+  .blob.b2 { width: 60px; height: 60px; background: var(--mint);  top: 42%; left: 4%; animation-delay: -3s; }
+  .blob.b3 { width: 110px; height: 110px; background: var(--butter); bottom: 8%; right: 12%; animation-delay: -5s; }
+  @keyframes float { 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-16px) } }
+
+  .wrap { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 28px 20px 90px; }
+
+  /* ── ヘッダー ── */
+  header { text-align: center; margin-bottom: 22px; animation: pop .6s cubic-bezier(.2,1.3,.4,1) both; }
+  .logo { font-family: var(--disp); font-size: clamp(26px, 5vw, 40px); color: var(--ink);
+          text-shadow: 3px 3px 0 #ffe0cf; letter-spacing: .01em; }
+  .logo .acc { color: var(--peach-d); }
+  .tag { color: var(--ink-soft); font-size: 14px; margin-top: 6px; }
+  .badge-ph { display:inline-block; font-family: var(--disp); font-size: 12px; color: #fff;
+    background: var(--mint-d); padding: 4px 14px; border-radius: 999px; margin-bottom: 10px;
+    box-shadow: 3px 3px 0 rgba(56,184,148,.25); transform: rotate(-2deg); }
+
+  /* ── 共通カード ── */
+  .card { background: var(--white); border: 3px solid var(--line); border-radius: var(--r);
+    padding: 22px; box-shadow: var(--shadow); margin-bottom: 22px; }
+  .card-title { font-family: var(--disp); font-size: 17px; color: var(--ink);
+    display: flex; align-items: center; gap: 9px; margin: 0 0 4px; }
+  .card-title .ic { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center;
+    font-size: 18px; background: var(--cream2); }
+  .card-sub { color: var(--ink-soft); font-size: 13px; margin: 0 0 16px; }
+
+  /* ── フローマップ（主役）── */
+  .flow { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; position: relative; }
+  @media (max-width: 760px){ .flow { grid-template-columns: 1fr 1fr; } }
+  .stage {
+    position: relative; background: var(--cream); border: 3px solid var(--line);
+    border-radius: 18px; padding: 16px 12px; text-align: center; transition: .35s cubic-bezier(.2,1.2,.4,1);
   }
-  header h1 { margin: 0; font-size: 18px; letter-spacing: .02em; }
-  header p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
-  .wrap { max-width: 1100px; margin: 0 auto; padding: 20px 24px 60px; }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
-  .card {
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 12px; padding: 16px;
+  .stage .emoji { font-size: 30px; display: block; line-height: 1; margin-bottom: 8px; transition: .35s; }
+  .stage .st-name { font-family: var(--disp); font-size: 14px; color: var(--ink); }
+  .stage .st-fn { font-size: 11px; color: var(--ink-soft); font-family: var(--body); margin-top: 2px; }
+  .stage .st-desc { font-size: 11.5px; color: var(--ink-soft); margin-top: 8px; line-height: 1.55; }
+  .stage .st-state { position: absolute; top: -12px; right: -10px; width: 30px; height: 30px;
+    border-radius: 50%; display: grid; place-items: center; font-size: 15px; font-weight: 700;
+    background: #e9e1d4; color: #fff; border: 3px solid var(--white); transition: .3s; transform: scale(.6); opacity: 0; }
+  /* 矢印（PCのみ・ステージ間） */
+  .stage:not(:last-child)::after {
+    content: "→"; position: absolute; right: -13px; top: 50%; transform: translateY(-50%);
+    font-family: var(--disp); color: var(--line); font-size: 20px; z-index: 2;
   }
-  .card h2 { margin: 0 0 12px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
-  label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+  @media (max-width: 760px){ .stage::after { display: none; } }
+
+  /* 状態 */
+  .stage.active { border-color: var(--peach); box-shadow: 0 0 0 4px #ffe2d6; transform: translateY(-4px) scale(1.02); }
+  .stage.active .emoji { animation: wiggle .8s ease-in-out infinite; }
+  .stage.active .st-state { background: var(--peach); opacity: 1; transform: scale(1); animation: spin 1s linear infinite; }
+  .stage.active .st-state::before { content: "↻"; }
+  .stage.done { border-color: var(--mint); background: #f1fff9; }
+  .stage.done .st-state { background: var(--mint-d); opacity: 1; transform: scale(1); animation: bounce-in .5s; }
+  .stage.done .st-state::before { content: "✓"; }
+  .stage.error { border-color: #ffb0b0; background: #fff2f2; }
+  .stage.error .st-state { background: #ff8a8a; opacity: 1; transform: scale(1); }
+  .stage.error .st-state::before { content: "!"; }
+  @keyframes wiggle { 0%,100%{ transform: rotate(-7deg) } 50%{ transform: rotate(7deg) } }
+  @keyframes spin { to { transform: rotate(360deg) } }
+  @keyframes bounce-in { 0%{ transform: scale(0) } 60%{ transform: scale(1.3) } 100%{ transform: scale(1) } }
+  @keyframes pop { from { opacity: 0; transform: translateY(14px) scale(.96) } to { opacity: 1; transform: none } }
+
+  /* いま何してる？ ライブ表示 */
+  .now { margin-top: 16px; background: var(--cream2); border-radius: 14px; padding: 11px 16px;
+    font-size: 13.5px; color: var(--ink); display: flex; align-items: center; gap: 10px; min-height: 44px; }
+  .now .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--mint-d); flex: none; }
+  .now.running .dot { background: var(--peach-d); animation: blink 1s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: .25; transform: scale(.7); } }
+
+  /* ── 入力フォーム ── */
+  label { display: block; font-size: 13px; color: var(--ink); font-weight: 700; margin: 14px 0 5px; }
   input[type=text], input[type=password], textarea, select {
-    width: 100%; background: var(--panel2); color: var(--text);
-    border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px;
-    font-size: 13px; font-family: inherit;
+    width: 100%; font-family: var(--body); font-size: 14px; color: var(--ink);
+    background: var(--cream); border: 3px solid var(--line); border-radius: 13px; padding: 11px 14px;
+    transition: .2s;
   }
-  textarea { min-height: 120px; resize: vertical; font-family: var(--mono); font-size: 12px; }
-  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .btn {
-    background: var(--accent); color: #0a0d1d; border: none; cursor: pointer;
-    font-weight: 700; font-size: 14px; padding: 11px 18px; border-radius: 9px;
-  }
-  .btn:disabled { opacity: .5; cursor: not-allowed; }
-  .btn.secondary { background: var(--panel2); color: var(--text); border: 1px solid var(--border); font-weight: 600; }
-  .btn.small { padding: 8px 12px; font-size: 13px; }
-  .hint { font-size: 12px; color: var(--muted); margin-top: 6px; }
-  .hint code { background: var(--panel2); padding: 1px 5px; border-radius: 4px; }
-  #log {
-    font-family: var(--mono); font-size: 12px; background: #0b0e1c;
-    border: 1px solid var(--border); border-radius: 8px; padding: 12px;
-    height: 240px; overflow: auto; white-space: pre-wrap;
-  }
-  .log-line { margin: 0 0 2px; }
-  .log-start { color: var(--accent); }
-  .log-ok { color: var(--ok); }
-  .log-warn { color: var(--warn); }
-  .log-err { color: var(--err); }
-  .log-muted { color: var(--muted); }
-  .dl-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
-  .preview-frame {
-    width: 100%; height: 460px; border: 1px solid var(--border);
-    border-radius: 8px; background: #fff;
-  }
-  .pill { display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid var(--border); color:var(--muted); }
-  .seg { display:flex; gap:6px; }
-  .seg button {
-    flex:1; background: var(--panel2); border:1px solid var(--border); color: var(--muted);
-    padding: 8px; border-radius: 8px; cursor:pointer; font-size: 13px;
-  }
-  .seg button.active { background: var(--accent); color:#0a0d1d; border-color: var(--accent); font-weight:700; }
-  details { margin-top: 10px; }
-  summary { cursor: pointer; color: var(--muted); font-size: 13px; }
-  .muted { color: var(--muted); }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--peach); background: var(--white); box-shadow: 0 0 0 4px #ffe6da; }
+  textarea { min-height: 130px; resize: vertical; font-size: 12.5px; line-height: 1.6; }
+  .hint { font-size: 12px; color: var(--ink-soft); margin-top: 6px; }
+  .hint code, code.k { background: var(--cream2); padding: 1px 6px; border-radius: 6px; font-family: ui-monospace, monospace; font-size: 12px; }
+
+  /* タブ */
+  .seg { display: flex; gap: 8px; background: var(--cream2); padding: 5px; border-radius: 14px; }
+  .seg button { flex: 1; border: none; background: transparent; color: var(--ink-soft); cursor: pointer;
+    font-family: var(--disp); font-size: 13px; padding: 9px; border-radius: 10px; transition: .2s; }
+  .seg button.active { background: var(--white); color: var(--peach-d); box-shadow: var(--shadow-sm); }
+
+  /* ボタン */
+  .btn { font-family: var(--disp); font-size: 16px; cursor: pointer; border: none; color: #fff;
+    background: var(--peach-d); padding: 14px 26px; border-radius: 16px; box-shadow: 5px 5px 0 #e8623a;
+    transition: .12s; }
+  .btn:hover:not(:disabled) { transform: translate(-2px,-2px); box-shadow: 7px 7px 0 #e8623a; }
+  .btn:active:not(:disabled) { transform: translate(3px,3px); box-shadow: 2px 2px 0 #e8623a; }
+  .btn:disabled { background: #d9cdbb; box-shadow: 5px 5px 0 #c3b6a2; cursor: not-allowed; }
+  .btn.ghost { background: var(--white); color: var(--ink); border: 3px solid var(--line); box-shadow: var(--shadow-sm); font-size: 13px; padding: 10px 16px; }
+  .btn.ghost:hover:not(:disabled) { box-shadow: 5px 5px 0 rgba(120,100,70,.12); }
+  .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+
+  /* ログ */
+  #log { font-family: ui-monospace, monospace; font-size: 12px; background: #fffaf3;
+    border: 3px solid var(--line); border-radius: 14px; padding: 14px; height: 200px; overflow: auto;
+    white-space: pre-wrap; line-height: 1.7; }
+  .l-start{ color: var(--peach-d); } .l-ok{ color: var(--mint-d); } .l-warn{ color: #d99a2b; }
+  .l-err{ color: #e35d6a; } .l-muted{ color: var(--ink-soft); }
+
+  details summary { cursor: pointer; font-family: var(--disp); font-size: 13px; color: var(--ink-soft); margin-top: 14px; }
+  details textarea { margin-top: 6px; }
+
+  /* 成果物 */
+  .chips { display: flex; gap: 12px; flex-wrap: wrap; }
+  .chip { font-family: var(--disp); font-size: 13px; cursor: pointer; border: 3px solid var(--line);
+    background: var(--white); color: var(--ink); padding: 11px 18px; border-radius: 14px; box-shadow: var(--shadow-sm); transition: .12s; }
+  .chip:hover:not(:disabled){ transform: translateY(-3px); border-color: var(--mint); }
+  .chip:disabled { opacity: .45; cursor: not-allowed; }
+  .preview-frame { width: 100%; height: 480px; border: 3px solid var(--line); border-radius: 16px; background: #fff; margin-top: 8px; }
+
+  .stagger > * { opacity: 0; animation: pop .55s cubic-bezier(.2,1.2,.4,1) forwards; }
+  .stagger > *:nth-child(1){ animation-delay: .05s } .stagger > *:nth-child(2){ animation-delay: .13s }
+  .stagger > *:nth-child(3){ animation-delay: .21s } .stagger > *:nth-child(4){ animation-delay: .29s }
 </style>
 </head>
 <body>
-<header>
-  <h1>🛠 操作マニュアル自動生成ツール <span class="pill">フェーズ① プロトタイプ</span></h1>
-  <p>URL（または貼り付けHTML）→ routes → scenario(Gemini) → steps(ダミー画像) → manual.html。データ契約 JSON 3種を確定させる walking skeleton。</p>
-</header>
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
 
 <div class="wrap">
-  <div class="grid">
-    <!-- ───────── 入力カード ───────── -->
-    <div class="card">
-      <h2>1. 入力</h2>
+  <header>
+    <div class="badge-ph">フェーズ① ぷろとたいぷ</div>
+    <div class="logo">📖 マニュアル<span class="acc">めーかー</span></div>
+    <div class="tag">URL や HTML を渡すと、サイトの操作マニュアルを自動でつくるよ ✨</div>
+  </header>
 
-      <label>Gemini API キー（コードに保存されません / この欄からのみ使用）</label>
-      <input id="apiKey" type="password" placeholder="AIza... （Google AI Studio で取得）" autocomplete="off" />
-      <div class="hint">キーは <code>fetch</code> で Gemini を呼ぶときだけ使用し、ハードコードもダウンロード成果物にも含めません。</div>
+  <!-- ───────── フローマップ（主役）───────── -->
+  <div class="card">
+    <div class="card-title"><span class="ic">🗺️</span> いまの流れ</div>
+    <p class="card-sub">4つのステップを順番に進むよ。今どこにいるか・何をしてるかはここで分かる！</p>
 
-      <label>モデル</label>
-      <select id="model">
-        <option value="gemini-2.5-flash" selected>gemini-2.5-flash（無料枠・推奨）</option>
-        <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
-        <option value="gemini-2.0-flash">gemini-2.0-flash</option>
-      </select>
-
-      <label>入力モード</label>
-      <div class="seg" id="modeSeg">
-        <button data-mode="url" class="active">起点URL から取得</button>
-        <button data-mode="html">HTML を貼り付け</button>
+    <div class="flow stagger">
+      <div class="stage" data-stage="routes">
+        <span class="st-state"></span>
+        <span class="emoji">🔗</span>
+        <div class="st-name">リンク集め</div>
+        <div class="st-fn">extractRoutes()</div>
+        <div class="st-desc">ページの &lt;a&gt; から<br>同じサイト内のURLを<br>ぜんぶ拾う</div>
       </div>
-
-      <div id="urlMode">
-        <label>起点 URL</label>
-        <input id="startUrl" type="text" placeholder="https://example.com/" />
-        <div class="hint">⚠️ ブラウザのCORS制約で取得できないサイトが多数あります。取得に失敗したら「HTMLを貼り付け」モードを使ってください（フェーズ②で実巡回に差し替え）。</div>
+      <div class="stage" data-stage="scenario">
+        <span class="st-state"></span>
+        <span class="emoji">🤖</span>
+        <div class="st-name">シナリオ作り</div>
+        <div class="st-fn">generateScenario()</div>
+        <div class="st-desc">Geminiが「大事な画面と<br>操作」を考えて<br>手順リストにする</div>
       </div>
-
-      <div id="htmlMode" style="display:none">
-        <label>オリジン（例: https://example.com）</label>
-        <input id="originInput" type="text" placeholder="https://example.com" />
-        <label>ページHTML を貼り付け</label>
-        <textarea id="htmlInput" placeholder="<html> ... <a href=...> を含むHTML を貼り付け"></textarea>
+      <div class="stage" data-stage="steps">
+        <span class="st-state"></span>
+        <span class="emoji">📸</span>
+        <div class="st-name">ステップ化</div>
+        <div class="st-fn">runStepsMock()</div>
+        <div class="st-desc">各手順をカード化。<br>画像は今はダミー<br>(②で実写真に)</div>
       </div>
-
-      <div class="row" style="margin-top:16px">
-        <button id="runBtn" class="btn">▶ パイプライン実行</button>
-        <button id="sampleBtn" class="btn secondary small">サンプルHTMLを入れる</button>
+      <div class="stage" data-stage="manual">
+        <span class="st-state"></span>
+        <span class="emoji">📄</span>
+        <div class="st-name">マニュアル化</div>
+        <div class="st-fn">generateManual()</div>
+        <div class="st-desc">Geminiが各手順を<br>説明文にして<br>1枚のHTMLに合体</div>
       </div>
     </div>
 
-    <!-- ───────── 進捗カード ───────── -->
-    <div class="card">
-      <h2>2. 進捗ログ</h2>
-      <div id="log"><span class="log-muted">待機中… 「パイプライン実行」を押してください。</span></div>
-      <details>
-        <summary>各段の生成結果（JSON）を見る</summary>
-        <div style="margin-top:8px">
-          <label>routes</label>
-          <textarea id="routesOut" readonly></textarea>
-          <label>scenario</label>
-          <textarea id="scenarioOut" readonly></textarea>
-          <label>steps</label>
-          <textarea id="stepsOut" readonly></textarea>
-        </div>
-      </details>
+    <div class="now" id="now"><span class="dot"></span><span id="nowText">「スタート」を押すと、ここに進捗がリアルタイムで出るよ</span></div>
+  </div>
+
+  <!-- ───────── 入力 ───────── -->
+  <div class="card">
+    <div class="card-title"><span class="ic">✏️</span> なにを読む？</div>
+    <p class="card-sub">URLを渡すか、ページのHTMLを直接貼ってね。</p>
+
+    <div class="seg" id="modeSeg">
+      <button data-mode="url" class="active">🌐 URLから</button>
+      <button data-mode="html">📋 HTMLを貼る</button>
+    </div>
+
+    <div id="urlMode">
+      <label>起点 URL</label>
+      <input id="startUrl" type="text" placeholder="https://example.com/" />
+      <div class="hint">⚠️ ブラウザのCORS制約で取れないサイトも多いよ。ダメだったら「HTMLを貼る」にしてね（②で実巡回に差し替え）。</div>
+    </div>
+    <div id="htmlMode" style="display:none">
+      <label>オリジン（例: https://example.com）</label>
+      <input id="originInput" type="text" placeholder="https://example.com" />
+      <label>ページHTML</label>
+      <textarea id="htmlInput" placeholder="<html> … <a href> を含むHTML を貼ってね"></textarea>
+    </div>
+
+    <label>Gemini モデル</label>
+    <select id="model">
+      <option value="gemini-2.5-flash" selected>gemini-2.5-flash（無料枠・おすすめ）</option>
+      <option value="gemini-2.5-flash-lite">gemini-2.5-flash-lite</option>
+      <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+    </select>
+
+    <label>Gemini API キー <span style="font-weight:400;color:var(--ink-soft)">（コードの <code class="k">CONFIG.GEMINI_API_KEY</code> に入れてあれば空でOK）</span></label>
+    <input id="apiKey" type="password" placeholder="AIza...（空ならコードの定数を使う）" autocomplete="off" />
+    <div class="hint">キーは Gemini を呼ぶ時だけ使い、ダウンロード成果物には絶対に入れないよ。</div>
+
+    <div class="row" style="margin-top:20px">
+      <button id="runBtn" class="btn">🚀 スタート！</button>
+      <button id="sampleBtn" class="btn ghost">🎁 サンプルを入れる</button>
     </div>
   </div>
 
-  <!-- ───────── 出力カード ───────── -->
-  <div class="card" style="margin-top:16px">
-    <h2>3. 成果物</h2>
-    <div class="dl-row">
-      <button id="dlManual"   class="btn secondary small" disabled>⬇ manual.html</button>
-      <button id="dlScenario" class="btn secondary small" disabled>⬇ scenario.json</button>
-      <button id="dlSteps"    class="btn secondary small" disabled>⬇ steps.json</button>
-      <span class="muted" style="font-size:12px; align-self:center">完了するとダウンロードできます。</span>
+  <!-- ───────── ログ ───────── -->
+  <div class="card">
+    <div class="card-title"><span class="ic">📜</span> くわしいログ</div>
+    <div id="log"><span class="l-muted">待機中… 🌱</span></div>
+    <details>
+      <summary>▸ 各ステップの生成結果（JSON）を見る</summary>
+      <label>routes</label><textarea id="routesOut" readonly></textarea>
+      <label>scenario</label><textarea id="scenarioOut" readonly></textarea>
+      <label>steps</label><textarea id="stepsOut" readonly></textarea>
+    </details>
+  </div>
+
+  <!-- ───────── 成果物 ───────── -->
+  <div class="card">
+    <div class="card-title"><span class="ic">🎉</span> できあがり</div>
+    <p class="card-sub">完成したらダウンロードできるよ。下にプレビューも出る！</p>
+    <div class="chips">
+      <button id="dlManual"   class="chip" disabled>⬇ manual.html</button>
+      <button id="dlScenario" class="chip" disabled>⬇ scenario.json</button>
+      <button id="dlSteps"    class="chip" disabled>⬇ steps.json</button>
     </div>
-    <label style="margin-top:14px">プレビュー（manual.html）</label>
     <iframe id="preview" class="preview-frame" title="manual preview"></iframe>
   </div>
 </div>
@@ -236,140 +319,98 @@
 <script>
 "use strict";
 /* =================================================================================
- * グローバル状態（最新の生成結果を保持。ダウンロードボタンが参照する）
+ * ★ 設定（API キーはここに入れておけば UI 入力は空でOK。ハードコードを避けたい時は空のまま）
+ *   セキュリティ注意: このファイルを配布/コミットする時はキーを空に戻すこと。
  * ================================================================================= */
-const STATE = {
-  routes: null,    // 契約[1]
-  scenario: null,  // 契約[2]
-  steps: null,     // 契約[3]
-  manualHtml: null // generateManual() の出力（単一HTML文字列）
+const CONFIG = {
+  GEMINI_API_KEY: "",                 // ← ここに "AIza..." を入れると UI 入力不要
+  DEFAULT_MODEL: "gemini-2.5-flash"
 };
 
-/* =================================================================================
- * UI ヘルパ
- * ================================================================================= */
+/* 最新の生成結果を保持（ダウンロードが参照） */
+const STATE = { routes: null, scenario: null, steps: null, manualHtml: null };
+
+/* ── UI ヘルパ ── */
 const $ = (id) => document.getElementById(id);
 const logEl = $("log");
 let logCleared = false;
-
-function log(msg, cls = "log-muted") {
+function log(msg, cls = "l-muted") {
   if (!logCleared) { logEl.innerHTML = ""; logCleared = true; }
   const div = document.createElement("div");
-  div.className = "log-line " + cls;
+  div.className = cls;
   const t = new Date().toLocaleTimeString("ja-JP", { hour12: false });
   div.textContent = `[${t}] ${msg}`;
-  logEl.appendChild(div);
-  logEl.scrollTop = logEl.scrollHeight;
+  logEl.appendChild(div); logEl.scrollTop = logEl.scrollHeight;
 }
-const logStart = (m) => log("▶ " + m, "log-start");
-const logOk    = (m) => log("✓ " + m, "log-ok");
-const logWarn  = (m) => log("⚠ " + m, "log-warn");
-const logErr   = (m) => log("✗ " + m, "log-err");
+const logStart = (m) => log("▶ " + m, "l-start");
+const logOk    = (m) => log("✓ " + m, "l-ok");
+const logWarn  = (m) => log("⚠ " + m, "l-warn");
+const logErr   = (m) => log("✗ " + m, "l-err");
+
+/* ── フローマップの状態更新 & 「いま何してる」表示 ── */
+const STAGE_IDS = ["routes", "scenario", "steps", "manual"];
+function stageEl(id){ return document.querySelector(`.stage[data-stage="${id}"]`); }
+function setStage(id, state){ // state: "idle" | "active" | "done" | "error"
+  const el = stageEl(id); if (!el) return;
+  el.classList.remove("active", "done", "error");
+  if (state !== "idle") el.classList.add(state);
+}
+function resetStages(){ STAGE_IDS.forEach(id => setStage(id, "idle")); }
+function now(text, running){
+  $("nowText").textContent = text;
+  $("now").classList.toggle("running", !!running);
+}
 
 /* =================================================================================
- * STEP 1) extractRoutes(html, origin)
- *   入力HTML中の <a href> を列挙し、同一オリジンのみを routes 契約[1]に整形する。
+ * STEP 1) extractRoutes(html, origin) → routes 契約[1]
  * ================================================================================= */
 function extractRoutes(html, origin) {
   const doc = new DOMParser().parseFromString(html, "text/html");
   let originUrl;
-  try { originUrl = new URL(origin); }
-  catch { throw new Error("オリジンが不正です: " + origin); }
+  try { originUrl = new URL(origin); } catch { throw new Error("オリジンが不正です: " + origin); }
 
-  const seen = new Set();
-  const routes = [];
-
-  // 起点（depth 0）を必ず含める
+  const seen = new Set(); const routes = [];
   const rootHref = originUrl.origin + "/";
   seen.add(rootHref);
   const titleTag = doc.querySelector("title");
-  routes.push({
-    url: rootHref,
-    title: (titleTag && titleTag.textContent.trim()) || "トップ",
-    depth: 0
-  });
+  routes.push({ url: rootHref, title: (titleTag && titleTag.textContent.trim()) || "トップ", depth: 0 });
 
-  const anchors = Array.from(doc.querySelectorAll("a[href]"));
-  for (const a of anchors) {
+  for (const a of Array.from(doc.querySelectorAll("a[href]"))) {
     const raw = a.getAttribute("href");
-    if (!raw) continue;
-    if (/^(#|mailto:|tel:|javascript:)/i.test(raw)) continue;
-
-    let abs;
-    try { abs = new URL(raw, originUrl.origin + "/"); }
-    catch { continue; }
-
-    // 同一オリジンのみ
-    if (abs.origin !== originUrl.origin) continue;
-
-    abs.hash = ""; // フラグメントは除去
-    const key = abs.href;
-    if (seen.has(key)) continue;
-    seen.add(key);
-
+    if (!raw || /^(#|mailto:|tel:|javascript:)/i.test(raw)) continue;
+    let abs; try { abs = new URL(raw, originUrl.origin + "/"); } catch { continue; }
+    if (abs.origin !== originUrl.origin) continue;        // 同一オリジンのみ
+    abs.hash = "";
+    if (seen.has(abs.href)) continue; seen.add(abs.href);
     const label = (a.textContent || "").replace(/\s+/g, " ").trim();
-    // depth は パス階層の深さで近似（フェーズ②で実BFS深さに置換）
     const depth = abs.pathname.split("/").filter(Boolean).length;
-    routes.push({
-      url: abs.href,
-      title: label || abs.pathname || "(無題)",
-      depth: depth
-    });
+    routes.push({ url: abs.href, title: label || abs.pathname || "(無題)", depth });
   }
-
   return { origin: originUrl.origin, routes };
 }
 
 /* =================================================================================
- * STEP 2) generateScenario(routes)
- *   Gemini に routes を渡し、responseSchema で scenario 契約[2] を構造強制で生成する。
- *   ルートが多い場合はチャンク分割して投げ、steps を結合する。
+ * STEP 2) generateScenario(routes) → scenario 契約[2]（Gemini + responseSchema）
  * ================================================================================= */
-
-// scenario.steps[] の1要素に対応する responseSchema（自由記述を禁止し構造を強制）
 const SCENARIO_STEP_SCHEMA = {
   type: "object",
   properties: {
-    id:          { type: "string" },
-    name:        { type: "string" },
-    description: { type: "string" },
-    url:         { type: "string" },
-    actions: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          type:     { type: "string", enum: ["click", "fill", "goto", "wait"] },
-          selector: { type: "string" },
-          value:    { type: "string" }
-        },
-        required: ["type"]
-      }
-    }
+    id: { type: "string" }, name: { type: "string" }, description: { type: "string" }, url: { type: "string" },
+    actions: { type: "array", items: { type: "object", properties: {
+      type: { type: "string", enum: ["click", "fill", "goto", "wait"] },
+      selector: { type: "string" }, value: { type: "string" }
+    }, required: ["type"] } }
   },
   required: ["id", "name", "description", "url", "actions"]
 };
 
 async function callGemini(apiKey, model, prompt, responseSchema) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`;
-  const body = {
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    generationConfig: {
-      temperature: 0.2,
-      responseMimeType: "application/json"
-    }
-  };
+  const body = { contents: [{ role: "user", parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0.2, responseMimeType: "application/json" } };
   if (responseSchema) body.generationConfig.responseSchema = responseSchema;
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(`Gemini API ${res.status}: ${txt.slice(0, 300)}`);
-  }
+  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!res.ok) { const txt = await res.text().catch(() => ""); throw new Error(`Gemini API ${res.status}: ${txt.slice(0, 300)}`); }
   const data = await res.json();
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) throw new Error("Gemini 応答が空です（safety/quota の可能性）");
@@ -377,19 +418,13 @@ async function callGemini(apiKey, model, prompt, responseSchema) {
 }
 
 async function generateScenario(routes, apiKey, model) {
-  const baseUrl = routes.origin;
-  const allRoutes = routes.routes;
-
-  // ルートが多いと1リクエストが重くなるため分割（チャンク 12件）
-  const CHUNK = 12;
-  const collected = [];
-
+  const baseUrl = routes.origin; const allRoutes = routes.routes;
+  const CHUNK = 12; const collected = [];
   for (let i = 0; i < allRoutes.length; i += CHUNK) {
     const slice = allRoutes.slice(i, i + CHUNK);
-    const chunkNo = Math.floor(i / CHUNK) + 1;
-    const chunkTotal = Math.ceil(allRoutes.length / CHUNK);
+    const chunkNo = Math.floor(i / CHUNK) + 1; const chunkTotal = Math.ceil(allRoutes.length / CHUNK);
+    now(`🤖 Geminiがシナリオを考え中… (${chunkNo}/${chunkTotal})`, true);
     logStart(`scenario 生成 (チャンク ${chunkNo}/${chunkTotal}, ${slice.length}ページ)`);
-
     const prompt =
 `あなたは熟練のQAエンジニアです。以下のサイト routes から、利用者が操作マニュアルとして知るべき「重要な画面と操作」を steps として列挙してください。
 
@@ -406,47 +441,30 @@ ${baseUrl}
 
 # routes（このチャンク）
 ${JSON.stringify(slice, null, 2)}`;
-
     try {
       const out = await callGemini(apiKey, model, prompt, {
-        type: "object",
-        properties: { steps: { type: "array", items: SCENARIO_STEP_SCHEMA } },
-        required: ["steps"]
-      });
+        type: "object", properties: { steps: { type: "array", items: SCENARIO_STEP_SCHEMA } }, required: ["steps"] });
       const steps = Array.isArray(out.steps) ? out.steps : [];
-      collected.push(...steps);
-      logOk(`チャンク ${chunkNo} → ${steps.length} ステップ`);
-    } catch (e) {
-      logErr(`チャンク ${chunkNo} 失敗: ${e.message}（このチャンクをスキップして継続）`);
-    }
+      collected.push(...steps); logOk(`チャンク ${chunkNo} → ${steps.length} ステップ`);
+    } catch (e) { logErr(`チャンク ${chunkNo} 失敗: ${e.message}（スキップして継続）`); }
   }
-
-  // id を全体で振り直して一意化（チャンク間の重複防止）
   const steps = collected.map((s, idx) => ({
-    id:          `step-${String(idx + 1).padStart(2, "0")}`,
-    name:        s.name || `ステップ ${idx + 1}`,
-    description: s.description || "",
-    url:         s.url || baseUrl,
-    actions:     Array.isArray(s.actions) ? s.actions.filter(a => a && a.type) : []
+    id: `step-${String(idx + 1).padStart(2, "0")}`, name: s.name || `ステップ ${idx + 1}`,
+    description: s.description || "", url: s.url || baseUrl,
+    actions: Array.isArray(s.actions) ? s.actions.filter(a => a && a.type) : []
   }));
-
   if (steps.length === 0) throw new Error("scenario の steps が0件でした。");
   return { baseUrl, steps };
 }
 
 /* =================================================================================
- * STEP 3) runStepsMock(scenario)
- *   実スクショの代わりにダミー(placeholder://)で steps 契約[3] を生成する。
- *
+ * STEP 3) runStepsMock(scenario) → steps 契約[3]（ダミー画像）
  *   TODO(phase2): replace with real Playwright capture output
- *     - screenshotBefore/After を実 page.screenshot のパス/Base64 に
- *     - highlight を locator.boundingBox() の実座標に
- *     - consoleLogs を page.on('console'/'response') の実ログに
- *     - status をステップ実行の実成否に
+ *     screenshotBefore/After=実page.screenshot / highlight=boundingBox /
+ *     consoleLogs=page.on('console'/'response') / status=実成否
  * ================================================================================= */
 function runStepsMock(scenario) {
   const steps = scenario.steps.map((s) => {
-    // actions を人間可読な action 文字列へ要約（フェーズ②でも流用可能な体裁）
     const actionText = (s.actions && s.actions.length)
       ? s.actions.map(a => {
           if (a.type === "fill")  return `「${a.selector}」に "${a.value ?? "<sample>"}" を入力`;
@@ -456,70 +474,46 @@ function runStepsMock(scenario) {
           return a.type;
         }).join(" → ")
       : "ページを開いて内容を確認";
-
     return {
-      id:               s.id,
-      name:             s.name,
-      description:      s.description,
-      url:              s.url,
-      action:           actionText,
-      // ★ フェーズ①はダミー。契約のキー名は維持し、値だけ placeholder スキームにする。
-      screenshotBefore: `placeholder://before/${s.id}`,
+      id: s.id, name: s.name, description: s.description, url: s.url, action: actionText,
+      screenshotBefore: `placeholder://before/${s.id}`,   // ★ ②で実スクショに
       screenshotAfter:  `placeholder://after/${s.id}`,
-      highlight:        null,   // TODO(phase2): boundingBox を入れる
-      consoleLogs:      [],     // TODO(phase2): エラー/主要遷移のみ抽出
-      status:           "ok"
+      highlight: null, consoleLogs: [], status: "ok"
     };
   });
   return { steps };
 }
 
-/* =================================================================================
- * ダミー画像生成
- *   placeholder://before/step-01 のような値を、自己完結用の Base64(SVG) 画像に変換する。
- *   フェーズ②では実 PNG(Base64) に置き換わる。
- * ================================================================================= */
+/* ダミー画像: placeholder:// を自己完結用 Base64(SVG) に変換（②で実PNGに） */
 function placeholderToDataUri(placeholder, label) {
   const m = /^placeholder:\/\/(before|after)\/(.+)$/.exec(placeholder || "");
-  const phase = m ? m[1] : "shot";
-  const id = m ? m[2] : "step";
+  const phase = m ? m[1] : "shot"; const id = m ? m[2] : "step";
   const isBefore = phase === "before";
-  const bg = isBefore ? "#eef2ff" : "#e8fff6";
-  const bar = isBefore ? "#6c8cff" : "#38d39f";
+  const bg = isBefore ? "#fff2ea" : "#ecfff7"; const bar = isBefore ? "#ff9e80" : "#6fd3b8";
   const safeLabel = (label || id).replace(/[<>&]/g, "").slice(0, 40);
   const svg =
 `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360">
   <rect width="640" height="360" fill="${bg}"/>
-  <rect x="0" y="0" width="640" height="44" fill="${bar}"/>
-  <circle cx="22" cy="22" r="7" fill="#ffffff" opacity="0.9"/>
-  <circle cx="44" cy="22" r="7" fill="#ffffff" opacity="0.6"/>
-  <circle cx="66" cy="22" r="7" fill="#ffffff" opacity="0.4"/>
-  <text x="320" y="180" font-family="sans-serif" font-size="22" fill="#33406b" text-anchor="middle">DUMMY SCREENSHOT</text>
-  <text x="320" y="214" font-family="sans-serif" font-size="16" fill="#5a6796" text-anchor="middle">${phase} — ${id}</text>
-  <text x="320" y="250" font-family="sans-serif" font-size="14" fill="#7a86b0" text-anchor="middle">${safeLabel}</text>
-  <text x="320" y="320" font-family="sans-serif" font-size="12" fill="#9aa4cf" text-anchor="middle">フェーズ②で実スクショに置換されます</text>
+  <rect x="0" y="0" width="640" height="46" fill="${bar}"/>
+  <circle cx="24" cy="23" r="7" fill="#fff" opacity="0.9"/><circle cx="48" cy="23" r="7" fill="#fff" opacity="0.6"/><circle cx="72" cy="23" r="7" fill="#fff" opacity="0.4"/>
+  <text x="320" y="175" font-family="sans-serif" font-size="22" fill="#7a6a52" text-anchor="middle">DUMMY SCREENSHOT</text>
+  <text x="320" y="210" font-family="sans-serif" font-size="16" fill="#9b8c72" text-anchor="middle">${phase} — ${id}</text>
+  <text x="320" y="246" font-family="sans-serif" font-size="14" fill="#b0a288" text-anchor="middle">${safeLabel}</text>
+  <text x="320" y="318" font-family="sans-serif" font-size="12" fill="#c4b8a4" text-anchor="middle">フェーズ②で実スクショに置換されます</text>
 </svg>`;
   return "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svg)));
 }
 
 /* =================================================================================
- * STEP 4) generateManual(steps)
- *   steps をステップ単位で Gemini に渡し、各ステップの説明文（見出し＋手順）を生成。
- *   外側のHTML骨格はコード側の固定テンプレートで持ち、AI生成文を流し込む。
- *   画像は Base64 インライン化して「単一HTMLで自己完結」させる。
+ * STEP 4) generateManual(steps) → manual.html（ステップ単位生成 + 固定テンプレ + Base64画像）
  * ================================================================================= */
 async function generateManual(stepsContract, apiKey, model) {
-  const steps = stepsContract.steps;
-  const rendered = [];
-
+  const steps = stepsContract.steps; const rendered = [];
   for (let i = 0; i < steps.length; i++) {
     const s = steps[i];
+    now(`📝 説明文を作成中… (${i + 1}/${steps.length}) ${s.name}`, true);
     logStart(`manual 説明文 生成 (${i + 1}/${steps.length}) ${s.id}`);
-
-    let heading = s.name;
-    let body = s.description || "";
-
-    // ステップ単位で説明文を生成（全体を一括で「サイト作って」とは投げない）
+    let heading = s.name; let body = s.description || "";
     try {
       const prompt =
 `あなたはテクニカルライターです。次の1ステップについて、操作マニュアルに載せる日本語の説明を作成してください。
@@ -533,37 +527,19 @@ name: ${s.name}
 url: ${s.url}
 想定操作: ${s.action}
 補足: ${s.description}`;
-
       const out = await callGemini(apiKey, model, prompt, {
-        type: "object",
-        properties: { heading: { type: "string" }, body: { type: "string" } },
-        required: ["heading", "body"]
-      });
-      heading = out.heading || heading;
-      body = out.body || body;
-      logOk(`${s.id} 説明文 OK`);
-    } catch (e) {
-      // 1ステップ失敗で全体を止めない
-      logWarn(`${s.id} 説明文の生成失敗: ${e.message}（description で代替）`);
-    }
+        type: "object", properties: { heading: { type: "string" }, body: { type: "string" } }, required: ["heading", "body"] });
+      heading = out.heading || heading; body = out.body || body; logOk(`${s.id} 説明文 OK`);
+    } catch (e) { logWarn(`${s.id} 説明文の生成失敗: ${e.message}（description で代替）`); }
 
     const beforeImg = placeholderToDataUri(s.screenshotBefore, s.name + " (before)");
     const afterImg  = placeholderToDataUri(s.screenshotAfter,  s.name + " (after)");
-    const statusBadge = s.status === "ok"
-      ? '<span class="badge ok">OK</span>'
-      : `<span class="badge err">${esc(s.status)}</span>`;
-
+    const statusBadge = s.status === "ok" ? '<span class="badge ok">OK</span>' : `<span class="badge err">${esc(s.status)}</span>`;
     const logsHtml = (s.consoleLogs && s.consoleLogs.length)
-      ? `<details class="logs"><summary>コンソールログ (${s.consoleLogs.length})</summary><pre>${esc(s.consoleLogs.join("\n"))}</pre></details>`
-      : "";
-
+      ? `<details class="logs"><summary>コンソールログ (${s.consoleLogs.length})</summary><pre>${esc(s.consoleLogs.join("\n"))}</pre></details>` : "";
     rendered.push(
 `<section class="step">
-  <div class="step-head">
-    <span class="num">${i + 1}</span>
-    <h2>${esc(heading)}</h2>
-    ${statusBadge}
-  </div>
+  <div class="step-head"><span class="num">${i + 1}</span><h2>${esc(heading)}</h2>${statusBadge}</div>
   <p class="url"><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.url)}</a></p>
   <p class="body">${esc(body)}</p>
   <p class="action"><strong>操作:</strong> ${esc(s.action)}</p>
@@ -574,166 +550,133 @@ url: ${s.url}
   ${logsHtml}
 </section>`);
   }
-
-  // 固定HTMLテンプレート（外枠）に生成済みセクションを差し込む
   const generatedAt = new Date().toLocaleString("ja-JP");
   const baseUrl = (STATE.scenario && STATE.scenario.baseUrl) || "";
   return `<!DOCTYPE html>
-<html lang="ja"><head><meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<html lang="ja"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>操作マニュアル — ${esc(baseUrl)}</title>
 <style>
-  body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;line-height:1.7;color:#1b2030;background:#f5f7fb;margin:0}
+  body{font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;line-height:1.7;color:#4b4030;background:#fff7ee;margin:0}
   .doc{max-width:880px;margin:0 auto;padding:32px 20px 80px}
-  header.doc-head{border-bottom:2px solid #6c8cff;padding-bottom:16px;margin-bottom:24px}
+  header.doc-head{border-bottom:3px solid #ff9e80;padding-bottom:16px;margin-bottom:24px}
   header.doc-head h1{margin:0 0 4px;font-size:24px}
-  header.doc-head .meta{color:#6a7390;font-size:13px}
-  .step{background:#fff;border:1px solid #e2e7f3;border-radius:12px;padding:20px;margin:0 0 20px;box-shadow:0 1px 2px rgba(20,30,60,.04)}
+  header.doc-head .meta{color:#8a7d68;font-size:13px}
+  .step{background:#fffdfa;border:3px solid #f0ddc6;border-radius:16px;padding:20px;margin:0 0 20px}
   .step-head{display:flex;align-items:center;gap:12px}
   .step-head h2{margin:0;font-size:18px;flex:1}
-  .num{background:#6c8cff;color:#fff;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex:none}
+  .num{background:#ff9e80;color:#fff;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex:none}
   .badge{font-size:11px;padding:2px 9px;border-radius:999px;font-weight:700}
-  .badge.ok{background:#e2fff4;color:#0f9d6e}
-  .badge.err{background:#ffe6e9;color:#d23b4c}
-  .url{margin:8px 0 4px;font-size:13px}
-  .url a{color:#3a59d1;word-break:break-all}
+  .badge.ok{background:#e2fff4;color:#0f9d6e}.badge.err{background:#ffe6e9;color:#d23b4c}
+  .url{margin:8px 0 4px;font-size:13px}.url a{color:#e8623a;word-break:break-all}
   .body{margin:8px 0}
-  .action{margin:8px 0;font-size:14px;color:#3a4163;background:#f1f4fc;padding:8px 12px;border-radius:8px}
+  .action{margin:8px 0;font-size:14px;color:#5a4d3a;background:#fdeede;padding:8px 12px;border-radius:10px}
   .shots{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
   @media(max-width:620px){.shots{grid-template-columns:1fr}}
-  figure{margin:0}
-  figure img{width:100%;border:1px solid #e2e7f3;border-radius:8px;display:block}
-  figcaption{font-size:12px;color:#6a7390;text-align:center;margin-top:4px}
-  details.logs{margin-top:10px}
-  details.logs pre{background:#0b0e1c;color:#e7ebff;padding:10px;border-radius:8px;overflow:auto;font-size:12px}
-  footer.doc-foot{color:#9aa4cf;font-size:12px;text-align:center;margin-top:32px}
+  figure{margin:0}figure img{width:100%;border:2px solid #f0ddc6;border-radius:10px;display:block}
+  figcaption{font-size:12px;color:#8a7d68;text-align:center;margin-top:4px}
+  details.logs{margin-top:10px}details.logs pre{background:#3a3326;color:#fff7ee;padding:10px;border-radius:8px;overflow:auto;font-size:12px}
+  footer.doc-foot{color:#b0a288;font-size:12px;text-align:center;margin-top:32px}
 </style></head>
 <body><div class="doc">
-<header class="doc-head">
-  <h1>操作マニュアル</h1>
-  <div class="meta">対象: ${esc(baseUrl) || "(未設定)"} ／ 生成: ${esc(generatedAt)} ／ 全 ${steps.length} ステップ<br>
-  ⚠️ フェーズ①プロトタイプ: スクリーンショットはダミーです（フェーズ②で実画像に置換）。</div>
-</header>
+<header class="doc-head"><h1>📖 操作マニュアル</h1>
+<div class="meta">対象: ${esc(baseUrl) || "(未設定)"} ／ 生成: ${esc(generatedAt)} ／ 全 ${steps.length} ステップ<br>
+⚠️ フェーズ①プロトタイプ: スクリーンショットはダミーです（②で実画像に置換）。</div></header>
 ${rendered.join("\n")}
-<footer class="doc-foot">Generated by 操作マニュアル自動生成ツール — フェーズ①プロトタイプ</footer>
+<footer class="doc-foot">Generated by マニュアルめーかー — フェーズ①プロトタイプ</footer>
 </div></body></html>`;
 }
 
-// HTMLエスケープ
-function esc(s) {
-  return String(s == null ? "" : s)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-}
+function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
 
 /* =================================================================================
- * パイプライン本体（各段の開始/完了とエラーを画面に表示。1段の失敗で全体を止めない）
+ * パイプライン本体（フローマップと「いま何してる」を更新。1段失敗で全体を止めない）
  * ================================================================================= */
 async function runPipeline() {
-  const apiKey = $("apiKey").value.trim();
-  const model = $("model").value;
-  if (!apiKey) { logErr("Gemini API キーを入力してください。"); return; }
+  const model = $("model").value || CONFIG.DEFAULT_MODEL;
+  const apiKey = $("apiKey").value.trim() || CONFIG.GEMINI_API_KEY;   // ★ 空ならコードの定数を使う
+  if (!apiKey) { logErr("Gemini API キーが未設定です。UI欄か CONFIG.GEMINI_API_KEY に入れてね。"); now("🔑 APIキーが必要だよ", false); return; }
 
-  // 出力リセット
   STATE.routes = STATE.scenario = STATE.steps = STATE.manualHtml = null;
-  setDownloads(false);
+  setDownloads(false); resetStages();
   $("routesOut").value = $("scenarioOut").value = $("stepsOut").value = "";
-  logCleared = false;
-  $("runBtn").disabled = true;
+  logCleared = false; $("runBtn").disabled = true;
+  let stage = null;
 
   try {
-    // ── 入力取得 ──
+    // 入力取得
     let html, origin;
     if (currentMode === "url") {
       const startUrl = $("startUrl").value.trim();
-      if (!startUrl) throw new Error("起点URLを入力してください。");
-      const u = new URL(startUrl);
-      origin = u.origin;
-      logStart(`URL 取得を試行: ${startUrl}`);
-      try {
-        const res = await fetch(startUrl, { mode: "cors" });
-        html = await res.text();
-        logOk(`HTML 取得成功 (${html.length.toLocaleString()} bytes)`);
-      } catch (e) {
-        throw new Error(`URL取得に失敗（CORS制約の可能性）: ${e.message}。「HTMLを貼り付け」モードを使ってください。`);
-      }
+      if (!startUrl) throw new Error("起点URLを入力してね。");
+      origin = new URL(startUrl).origin;
+      now("🌐 ページを取得中…", true); logStart(`URL 取得を試行: ${startUrl}`);
+      try { const res = await fetch(startUrl, { mode: "cors" }); html = await res.text(); logOk(`HTML 取得成功 (${html.length.toLocaleString()} bytes)`); }
+      catch (e) { throw new Error(`URL取得に失敗（CORS制約の可能性）: ${e.message}。「HTMLを貼る」モードを使ってね。`); }
     } else {
-      origin = $("originInput").value.trim();
-      html = $("htmlInput").value;
-      if (!origin) throw new Error("オリジンを入力してください。");
-      if (!html.trim()) throw new Error("HTMLを貼り付けてください。");
+      origin = $("originInput").value.trim(); html = $("htmlInput").value;
+      if (!origin) throw new Error("オリジンを入力してね。");
+      if (!html.trim()) throw new Error("HTMLを貼ってね。");
       logOk("貼り付けHTMLを使用します。");
     }
 
-    // ── STEP 1: routes ──
+    // STEP1 routes
+    stage = "routes"; setStage(stage, "active"); now("🔗 リンクを集めてるよ…", true);
     logStart("extractRoutes(): <a href> 列挙（同一オリジン）");
     STATE.routes = extractRoutes(html, origin);
     $("routesOut").value = JSON.stringify(STATE.routes, null, 2);
-    logOk(`routes 抽出: ${STATE.routes.routes.length} 件`);
+    logOk(`routes 抽出: ${STATE.routes.routes.length} 件`); setStage(stage, "done");
 
-    // ── STEP 2: scenario ──
+    // STEP2 scenario
+    stage = "scenario"; setStage(stage, "active");
     logStart("generateScenario(): Gemini で scenario 生成");
     STATE.scenario = await generateScenario(STATE.routes, apiKey, model);
     $("scenarioOut").value = JSON.stringify(STATE.scenario, null, 2);
-    logOk(`scenario 生成: ${STATE.scenario.steps.length} ステップ`);
+    logOk(`scenario 生成: ${STATE.scenario.steps.length} ステップ`); setStage(stage, "done");
 
-    // ── STEP 3: steps（ダミー） ──
+    // STEP3 steps
+    stage = "steps"; setStage(stage, "active"); now("📸 ステップカードを作ってるよ…", true);
     logStart("runStepsMock(): ダミー画像で steps を生成");
     STATE.steps = runStepsMock(STATE.scenario);
     $("stepsOut").value = JSON.stringify(STATE.steps, null, 2);
-    logOk(`steps 生成: ${STATE.steps.steps.length} 件（screenshot は placeholder://）`);
+    logOk(`steps 生成: ${STATE.steps.steps.length} 件（screenshot は placeholder://）`); setStage(stage, "done");
 
-    // ── STEP 4: manual ──
+    // STEP4 manual
+    stage = "manual"; setStage(stage, "active");
     logStart("generateManual(): ステップ単位で説明文化 → manual.html");
     STATE.manualHtml = await generateManual(STATE.steps, apiKey, model);
-    logOk(`manual.html 生成完了 (${STATE.manualHtml.length.toLocaleString()} bytes)`);
+    logOk(`manual.html 生成完了 (${STATE.manualHtml.length.toLocaleString()} bytes)`); setStage(stage, "done");
 
-    // ── プレビュー & ダウンロード有効化 ──
-    $("preview").srcdoc = STATE.manualHtml;
-    setDownloads(true);
-    logOk("🎉 完了: プレビュー表示 & 3種ダウンロード可能");
+    $("preview").srcdoc = STATE.manualHtml; setDownloads(true);
+    now("🎉 完成！下のボタンからダウンロードできるよ", false);
+    logOk("🎉 完了: プレビュー & 3種ダウンロード可能");
   } catch (e) {
+    if (stage) setStage(stage, "error");
+    now("😢 エラーが起きたよ（ログを見てね）", false);
     logErr(e.message || String(e));
-  } finally {
-    $("runBtn").disabled = false;
-  }
+  } finally { $("runBtn").disabled = false; }
 }
 
-/* =================================================================================
- * ダウンロード（Blob + URL.createObjectURL で3種を出す）
- * ================================================================================= */
+/* ── ダウンロード ── */
 function download(filename, content, mime) {
-  const blob = new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = filename;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  const blob = new Blob([content], { type: mime }); const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-function setDownloads(enabled) {
-  $("dlManual").disabled = !enabled;
-  $("dlScenario").disabled = !enabled;
-  $("dlSteps").disabled = !enabled;
-}
+function setDownloads(en) { $("dlManual").disabled = !en; $("dlScenario").disabled = !en; $("dlSteps").disabled = !en; }
 
-/* =================================================================================
- * モード切替・サンプル・イベント結線
- * ================================================================================= */
+/* ── モード切替・サンプル・結線 ── */
 let currentMode = "url";
 $("modeSeg").addEventListener("click", (e) => {
-  const btn = e.target.closest("button[data-mode]");
-  if (!btn) return;
+  const btn = e.target.closest("button[data-mode]"); if (!btn) return;
   currentMode = btn.dataset.mode;
   for (const b of $("modeSeg").children) b.classList.toggle("active", b === btn);
-  $("urlMode").style.display  = currentMode === "url"  ? "" : "none";
+  $("urlMode").style.display = currentMode === "url" ? "" : "none";
   $("htmlMode").style.display = currentMode === "html" ? "" : "none";
 });
-
 $("sampleBtn").addEventListener("click", () => {
   currentMode = "html";
   for (const b of $("modeSeg").children) b.classList.toggle("active", b.dataset.mode === "html");
-  $("urlMode").style.display = "none";
-  $("htmlMode").style.display = "";
+  $("urlMode").style.display = "none"; $("htmlMode").style.display = "";
   $("originInput").value = "https://shop.example.com";
   $("htmlInput").value =
 `<!DOCTYPE html><html><head><title>サンプルECサイト</title></head>
@@ -756,11 +699,13 @@ $("sampleBtn").addEventListener("click", () => {
   </main>
 </body></html>`;
 });
-
 $("runBtn").addEventListener("click", runPipeline);
 $("dlManual").addEventListener("click",   () => STATE.manualHtml && download("manual.html", STATE.manualHtml, "text/html"));
 $("dlScenario").addEventListener("click", () => STATE.scenario   && download("scenario.json", JSON.stringify(STATE.scenario, null, 2), "application/json"));
 $("dlSteps").addEventListener("click",    () => STATE.steps      && download("steps.json", JSON.stringify(STATE.steps, null, 2), "application/json"));
+
+/* 起動時: コードにキーがあればプレースホルダで知らせる */
+if (CONFIG.GEMINI_API_KEY) $("apiKey").placeholder = "（CONFIG のキーを使用中）";
 </script>
 </body>
 </html>
