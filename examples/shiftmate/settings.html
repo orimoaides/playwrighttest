@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>設定 — シフトメイト</title>
+<link rel="stylesheet" href="assets/app.css" />
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <a href="index.html" class="brand"><span class="dot">S</span>シフトメイト</a>
+    <div class="navlabel">メニュー</div>
+    <a href="dashboard.html"><span class="ic">▦</span> ダッシュボード</a>
+    <a href="shifts.html"><span class="ic">🗓</span> シフト</a>
+    <a href="staff.html"><span class="ic">👥</span> スタッフ</a>
+    <a href="settings.html" class="active"><span class="ic">⚙</span> 設定</a>
+    <div class="side-foot">
+      <div class="avatar">田</div>
+      <div><div style="color:#fff;font-weight:700;font-size:13px">田中 太郎</div><div style="font-size:11px;color:#8a8ea6">まるごとカフェ 渋谷店</div></div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div><h1>設定</h1><div class="sub">店舗とアカウントの設定</div></div>
+    </div>
+
+    <div class="content">
+      <div class="page-actions">
+        <div class="tabs"><a class="active">店舗情報</a><a>通知</a><a>料金プラン</a><a>メンバー権限</a></div>
+      </div>
+
+      <div class="grid2">
+        <div class="panel">
+          <div class="panel-head"><h2>店舗情報</h2></div>
+          <div class="panel-body">
+            <form action="settings.html" method="get">
+              <div class="field">
+                <label for="store">店舗名</label>
+                <input id="store" name="store" type="text" value="まるごとカフェ 渋谷店" />
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label for="open">営業開始</label>
+                  <input id="open" name="open" type="time" value="09:00" />
+                </div>
+                <div class="field">
+                  <label for="close">営業終了</label>
+                  <input id="close" name="close" type="time" value="22:00" />
+                </div>
+              </div>
+              <div class="field">
+                <label for="budget">週の人件費予算</label>
+                <input id="budget" name="budget" type="text" value="¥420,000" />
+                <div class="help">この金額を超えると、シフト作成時に警告が表示されます。</div>
+              </div>
+              <div class="field">
+                <label for="tz">タイムゾーン</label>
+                <select id="tz" name="tz"><option>東京 (GMT+9)</option><option>大阪 (GMT+9)</option></select>
+              </div>
+              <button type="submit" class="btn btn-primary">変更を保存</button>
+            </form>
+          </div>
+        </div>
+
+        <div>
+          <div class="panel" style="margin-bottom:16px">
+            <div class="panel-head"><h2>現在のプラン</h2></div>
+            <div class="panel-body">
+              <div style="font-family:var(--disp);font-weight:800;font-size:24px">スタンダード</div>
+              <p class="muted" style="margin:4px 0 14px">¥4,800 / 月 ・ 次回更新 2026年7月20日</p>
+              <a href="index.html#pricing" class="btn btn-ghost btn-sm">プランを変更</a>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h2>通知</h2></div>
+            <div class="panel-body">
+              <label class="checkrow" style="margin:6px 0"><input type="checkbox" checked /> 希望シフトの提出をメールで受け取る</label>
+              <label class="checkrow" style="margin:6px 0"><input type="checkbox" checked /> 未充足の枠が出たら通知する</label>
+              <label class="checkrow" style="margin:6px 0"><input type="checkbox" /> 人件費が予算の90%を超えたら通知する</label>
+              <button class="btn btn-ghost btn-sm" style="margin-top:8px">通知設定を保存</button>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:16px;border-color:var(--coral-soft)">
+            <div class="panel-body">
+              <b style="color:var(--coral-d)">アカウントの削除</b>
+              <p class="muted" style="margin:6px 0 12px">店舗データはすべて削除され、元に戻せません。</p>
+              <a href="settings.html" class="btn btn-ghost btn-sm" style="border-color:var(--coral);color:var(--coral-d)">アカウントを削除</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

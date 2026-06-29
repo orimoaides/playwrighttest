@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>新規登録 — シフトメイト</title>
+<link rel="stylesheet" href="assets/app.css" />
+</head>
+<body>
+<div class="auth">
+  <aside class="auth-aside">
+    <a href="index.html" class="brand" style="color:#fff"><span class="dot">S</span>シフトメイト</a>
+    <p class="q">今週のシフトから、らくに。<br>登録は2分で完了します。</p>
+    <p style="color:#b9bcd0;font-size:13px;position:relative;z-index:1">クレジットカード不要 ・ 14日間 無料</p>
+  </aside>
+  <main class="auth-main">
+    <div class="auth-box">
+      <a href="index.html" class="brand"><span class="dot">S</span>シフトメイト</a>
+      <h1>アカウント作成</h1>
+      <p class="sub">無料プランで今すぐ始められます。</p>
+      <form action="dashboard.html" method="get">
+        <div class="form-row">
+          <div class="field">
+            <label for="lastname">姓</label>
+            <input id="lastname" name="lastname" type="text" placeholder="田中" required />
+          </div>
+          <div class="field">
+            <label for="firstname">名</label>
+            <input id="firstname" name="firstname" type="text" placeholder="太郎" required />
+          </div>
+        </div>
+        <div class="field">
+          <label for="store">店舗名</label>
+          <input id="store" name="store" type="text" placeholder="まるごとカフェ 渋谷店" required />
+        </div>
+        <div class="field">
+          <label for="email">メールアドレス</label>
+          <input id="email" name="email" type="email" placeholder="you@example.com" required />
+        </div>
+        <div class="field">
+          <label for="password">パスワード</label>
+          <input id="password" name="password" type="password" placeholder="8文字以上" required />
+          <div class="help">英字・数字を含む8文字以上で設定してください。</div>
+        </div>
+        <label class="checkrow"><input type="checkbox" required /> <span><a href="index.html" style="color:var(--coral-d)">利用規約</a>と<a href="index.html" style="color:var(--coral-d)">プライバシーポリシー</a>に同意します</span></label>
+        <button type="submit" class="btn btn-primary btn-block">無料でアカウントを作成</button>
+      </form>
+      <p class="auth-alt">すでにアカウントをお持ちですか？ <a href="login.html">ログイン</a></p>
+    </div>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ログイン — シフトメイト</title>
+<link rel="stylesheet" href="assets/app.css" />
+</head>
+<body>
+<div class="auth">
+  <aside class="auth-aside">
+    <a href="index.html" class="brand" style="color:#fff"><span class="dot">S</span>シフトメイト</a>
+    <p class="q">「シフト作成にかけていた毎週3時間が、20分になりました。」</p>
+    <p style="color:#b9bcd0;font-size:13px;position:relative;z-index:1">— まるごとカフェ 店長 / 田中さん</p>
+  </aside>
+  <main class="auth-main">
+    <div class="auth-box">
+      <a href="index.html" class="brand"><span class="dot">S</span>シフトメイト</a>
+      <h1>おかえりなさい</h1>
+      <p class="sub">アカウントにログインしてください。</p>
+      <form action="dashboard.html" method="get">
+        <div class="field">
+          <label for="email">メールアドレス</label>
+          <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <label for="password">パスワード</label>
+          <input id="password" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required />
+          <div class="help"><a href="login.html" style="color:var(--coral-d)">パスワードをお忘れですか？</a></div>
+        </div>
+        <label class="checkrow"><input type="checkbox" checked /> ログイン状態を保持する</label>
+        <button type="submit" class="btn btn-primary btn-block">ログイン</button>
+      </form>
+      <p class="auth-alt">アカウントをお持ちでないですか？ <a href="signup.html">新規登録</a></p>
+    </div>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>スタッフ — シフトメイト</title>
+<link rel="stylesheet" href="assets/app.css" />
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <a href="index.html" class="brand"><span class="dot">S</span>シフトメイト</a>
+    <div class="navlabel">メニュー</div>
+    <a href="dashboard.html"><span class="ic">▦</span> ダッシュボード</a>
+    <a href="shifts.html"><span class="ic">🗓</span> シフト</a>
+    <a href="staff.html" class="active"><span class="ic">👥</span> スタッフ</a>
+    <a href="settings.html"><span class="ic">⚙</span> 設定</a>
+    <div class="side-foot">
+      <div class="avatar">田</div>
+      <div><div style="color:#fff;font-weight:700;font-size:13px">田中 太郎</div><div style="font-size:11px;color:#8a8ea6">まるごとカフェ 渋谷店</div></div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div><h1>スタッフ</h1><div class="sub">12名 登録</div></div>
+      <div class="spacer"></div>
+      <input class="search" placeholder="名前で検索…" />
+      <a href="settings.html" class="btn btn-primary btn-sm">＋ スタッフを追加</a>
+    </div>
+
+    <div class="content">
+      <div class="page-actions">
+        <div class="tabs"><a class="active">全員</a><a>ホール</a><a>キッチン</a><a>レジ</a></div>
+        <div class="spacer"></div>
+        <span class="muted">時給は税込表示</span>
+      </div>
+
+      <div class="panel">
+        <table class="tbl">
+          <thead><tr><th>名前</th><th>役割</th><th>時給</th><th>今週の時間</th><th>状態</th><th></th></tr></thead>
+          <tbody>
+            <tr><td><div class="who"><span class="av" style="background:var(--coral)">田</span><div><b>田中 太郎</b><div class="muted" style="font-size:12px">tanaka@example.com</div></div></div></td><td>ホール</td><td class="mono">¥1,200</td><td class="mono">28.0h</td><td><span class="badge green">勤務中</span></td><td><a href="settings.html" class="btn btn-ghost btn-sm">詳細</a></td></tr>
+            <tr><td><div class="who"><span class="av" style="background:var(--mint)">佐</span><div><b>佐藤 花子</b><div class="muted" style="font-size:12px">sato@example.com</div></div></div></td><td>キッチン</td><td class="mono">¥1,250</td><td class="mono">32.0h</td><td><span class="badge green">勤務中</span></td><td><a href="settings.html" class="btn btn-ghost btn-sm">詳細</a></td></tr>
+            <tr><td><div class="who"><span class="av" style="background:var(--violet)">鈴</span><div><b>鈴木 一郎</b><div class="muted" style="font-size:12px">suzuki@example.com</div></div></div></td><td>レジ</td><td class="mono">¥1,150</td><td class="mono">24.0h</td><td><span class="badge green">勤務中</span></td><td><a href="settings.html" class="btn btn-ghost btn-sm">詳細</a></td></tr>
+            <tr><td><div class="who"><span class="av" style="background:var(--butter);color:#5a4300">山</span><div><b>山本 みき</b><div class="muted" style="font-size:12px">yamamoto@example.com</div></div></div></td><td>キッチン</td><td class="mono">¥1,200</td><td class="mono">18.0h</td><td><span class="badge gray">休暇中</span></td><td><a href="settings.html" class="btn btn-ghost btn-sm">詳細</a></td></tr>
+            <tr><td><div class="who"><span class="av" style="background:#7a8194">中</span><div><b>中村 健</b><div class="muted" style="font-size:12px">nakamura@example.com</div></div></div></td><td>ホール</td><td class="mono">¥1,200</td><td class="mono">12.0h</td><td><span class="badge coral">未提出</span></td><td><a href="settings.html" class="btn btn-ghost btn-sm">詳細</a></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
