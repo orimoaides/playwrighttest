@@ -234,9 +234,9 @@
         <textarea id="htmlInput" placeholder="<a href> を含むページの HTML を貼り付けてください"></textarea>
       </div>
 
-      <label>Gemini API キー <span class="opt">（コードの <code class="k">CONFIG.GEMINI_API_KEY</code> を設定済みの場合は空欄で可）</span></label>
-      <input id="apiKey" type="password" placeholder="AIza…" autocomplete="off" />
-      <div class="hint">API キーは Gemini への通信時のみ使用し、ダウンロードする成果物には含めません。使用モデルはコードの <code class="k">CONFIG.MODEL</code> で指定します。</div>
+      <label>Gemini API キー <span class="opt">（Gemini Canvas 上では空欄のままで動作します）</span></label>
+      <input id="apiKey" type="password" placeholder="AIza…（Canvas では空でOK）" autocomplete="off" />
+      <div class="hint">Gemini Canvas はキーが空のとき実行時に自動でキーを注入します（<code class="k">CONFIG.USE_CANVAS_KEY = true</code>）。Canvas 外で単体利用する場合は、この欄か <code class="k">CONFIG.GEMINI_API_KEY</code> に自分のキーを設定してください。使用モデルはコードの <code class="k">CONFIG.MODEL</code> で指定します。</div>
 
       <div class="actions">
         <button id="runBtn" class="btn">実行</button>
@@ -284,8 +284,14 @@
  *   セキュリティ注意: 配布・コミット時は GEMINI_API_KEY を空に戻すこと。
  * ================================================================================= */
 const CONFIG = {
-  GEMINI_API_KEY: "",                 // 例: "AIza..."（空なら UI 入力欄を使用）
-  MODEL: "gemini-2.5-flash"           // 使用モデル（無料枠。必要に応じて変更）
+  GEMINI_API_KEY: "",                 // 例: "AIza..."（空なら UI 入力欄 → Canvas注入 の順）
+  MODEL: "gemini-2.5-flash",          // 使用モデル（無料枠。万一弾かれたら "gemini-2.0-flash"）
+
+  // ★ Gemini Canvas で動かす場合は true のまま。
+  //   Canvas は「キーを空文字にしておくと実行時にプラットフォームが自動注入する」仕組みのため、
+  //   キーが空でもブロックせず実行する。Canvas外（ローカルのHTML単体）で使う時は、
+  //   false にして GEMINI_API_KEY か入力欄に自分のキーを入れる。
+  USE_CANVAS_KEY: true
 };
 
 /* 最新の生成結果を保持（ダウンロードが参照） */
@@ -558,7 +564,12 @@ function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace
 async function runPipeline() {
   const model = CONFIG.MODEL;                                       // ★ モデルはコードで指定
   const apiKey = $("apiKey").value.trim() || CONFIG.GEMINI_API_KEY; // ★ 空ならコードの定数を使用
-  if (!apiKey) { logErr("Gemini API キーが未設定です。入力欄または CONFIG.GEMINI_API_KEY を設定してください。"); setStatus("API キーが未設定です。", "error"); return; }
+  // Canvas では空キーのままプラットフォームに注入させる。Canvas外では空キーをブロックする。
+  if (!apiKey && !CONFIG.USE_CANVAS_KEY) {
+    logErr("Gemini API キーが未設定です。入力欄または CONFIG.GEMINI_API_KEY を設定してください。");
+    setStatus("API キーが未設定です。", "error"); return;
+  }
+  if (!apiKey) logWarn("API キーが空のため、Canvas のキー注入を前提に実行します（Canvas外では失敗します）。");
 
   STATE.routes = STATE.scenario = STATE.steps = STATE.manualHtml = null;
   setDownloads(false); resetStages();

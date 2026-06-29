@@ -20,6 +20,8 @@ URL（または貼り付けHTML）を渡すと、そのサイトの**操作マ�
 1. `index.html` をブラウザ（または Gemini Canvas）で開く。
 2. **Gemini API キー**を用意（[Google AI Studio](https://aistudio.google.com/app/apikey) で取得）。入力欄に貼るか、コード冒頭の `CONFIG.GEMINI_API_KEY` 定数に入れておけば入力欄は空でOK（※配布・コミット時は空に戻すこと）。ダウンロード成果物にキーは含まれません。
    - 使用モデルは UI ではなくコードの `CONFIG.MODEL`（既定: `gemini-2.5-flash`）で指定します。
+   - **Gemini Canvas 上で動かす場合はキー欄を空のままで OK**。Canvas はキーが空のとき実行時に自動でキーを注入します（`CONFIG.USE_CANVAS_KEY = true`）。Canvas 外でローカル単体利用する場合のみ自分のキーが必要です（`USE_CANVAS_KEY = false` にして設定）。
+   - 注意: URL取得モードはブラウザ/Canvas の CORS 制約でほぼ失敗します。Canvas では「HTML を貼り付け」モードを使ってください。
 3. 入力モードを選ぶ:
    - **起点URL から取得**: URL を入れる。※ブラウザの CORS 制約で取得できないサイトが多いです。失敗したら次のモードへ。
    - **HTML を貼り付け**: オリジン（例 `https://example.com`）と、対象ページの HTML を貼る。「サンプルHTMLを入れる」ボタンで動作確認できます。
