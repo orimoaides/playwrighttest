@@ -234,10 +234,6 @@
         <textarea id="htmlInput" placeholder="<a href> を含むページの HTML を貼り付けてください"></textarea>
       </div>
 
-      <label>Gemini API キー <span class="opt">（Gemini Canvas 上では空欄のままで動作します）</span></label>
-      <input id="apiKey" type="password" placeholder="AIza…（Canvas では空でOK）" autocomplete="off" />
-      <div class="hint">Gemini Canvas はキーが空のとき実行時に自動でキーを注入します（<code class="k">CONFIG.USE_CANVAS_KEY = true</code>）。Canvas 外で単体利用する場合は、この欄か <code class="k">CONFIG.GEMINI_API_KEY</code> に自分のキーを設定してください。使用モデルはコードの <code class="k">CONFIG.MODEL</code> で指定します。</div>
-
       <div class="actions">
         <button id="runBtn" class="btn">実行</button>
         <button id="sampleBtn" class="btn ghost">サンプルを読み込む</button>
@@ -563,7 +559,7 @@ function esc(s){ return String(s == null ? "" : s).replace(/&/g,"&amp;").replace
  * ================================================================================= */
 async function runPipeline() {
   const model = CONFIG.MODEL;                                       // ★ モデルはコードで指定
-  const apiKey = $("apiKey").value.trim() || CONFIG.GEMINI_API_KEY; // ★ 空ならコードの定数を使用
+  const apiKey = CONFIG.GEMINI_API_KEY;                             // ★ キーはコード/Canvas注入のみ（UIに出さない）
   // Canvas では空キーのままプラットフォームに注入させる。Canvas外では空キーをブロックする。
   if (!apiKey && !CONFIG.USE_CANVAS_KEY) {
     logErr("Gemini API キーが未設定です。入力欄または CONFIG.GEMINI_API_KEY を設定してください。");
@@ -678,9 +674,6 @@ $("runBtn").addEventListener("click", runPipeline);
 $("dlManual").addEventListener("click",   () => STATE.manualHtml && download("manual.html", STATE.manualHtml, "text/html"));
 $("dlScenario").addEventListener("click", () => STATE.scenario   && download("scenario.json", JSON.stringify(STATE.scenario, null, 2), "application/json"));
 $("dlSteps").addEventListener("click",    () => STATE.steps      && download("steps.json", JSON.stringify(STATE.steps, null, 2), "application/json"));
-
-/* 起動時: コードにキーがあれば入力欄に案内を表示 */
-if (CONFIG.GEMINI_API_KEY) $("apiKey").placeholder = "（CONFIG のキーを使用します）";
 </script>
 </body>
 </html>
