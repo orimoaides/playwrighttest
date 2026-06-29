@@ -1,135 +1,152 @@
 # playwrighttest — 操作マニュアル自動生成ツール
 
-URL（または貼り付けHTML）を渡すと、そのサイトの**操作マニュアル(HTML)を自動生成する**ツールです。
-本リポジトリはフェーズ制で開発します。
+URL（やローカルのHTML一式）を渡すと、そのサイトの **操作マニュアル(HTML)を自動生成する** ツールです。
+サイトを「歩いて」操作を再現し、スクリーンショットと説明文つきのマニュアルを書き出します。
 
-| フェーズ | 形態 | 状態 |
-|---|---|---|
-| ① | Gemini Canvas 版プロトタイプ（単一HTML） | ✅ 本ブランチ `phase1/canvas-prototype` |
-| ② | ブラウザアプリ版（実 Playwright で巡回・スクショ） | 予定 |
-| ③ | アプリ / MCP 版（CLI + MCP サーバー） | 予定 |
+```
+入力(URL / HTML / ローカル) → routes → scenario(AI) → steps(撮影) → manual(AI) → 出力(HTML)
+```
+
+このリポジトリはフェーズ制で開発しています。
+
+| フェーズ | 形態 | 状態 | 置き場所 |
+|---|---|---|---|
+| ① | Gemini Canvas 版プロトタイプ（単一HTML） | ✅ 完了 | ルートの `index.html` |
+| ② | ブラウザアプリ版（実 Playwright・ローカル実行） | ✅ 完了 | `src/`・`package.json` ほか |
+| ③ | アプリ / MCP 版（CLI + MCP サーバー） | 予定 | — |
+
+関連ドキュメント: [Dify.md](Dify.md)（AI を Dify に切替）／ [docs/engineer-briefing.html](docs/engineer-briefing.html)（説明スライド）／ [examples/shiftmate/](examples/shiftmate/)（デモ用 SaaS サイト）
 
 ---
 
-## フェーズ①（このブランチの成果物）
+## フェーズ① — Gemini Canvas 版（`index.html`）
 
-完成品ではなく、後続フェーズが従う**データ契約(JSON 3種)を確定させた、動く骨格(walking skeleton)**です。
+完成品ではなく、後続フェーズが従う **データ契約(JSON 3種)を確定させた、動く骨格(walking skeleton)**。
+ブラウザ（または Gemini Canvas）で `index.html` を開くだけで動きます。依存ライブラリなし・単一ファイル。
+
+入力モードは3つ:
+
+- **URL から取得** — 直接 fetch が CORS で失敗したら `CONFIG.CORS_PROXIES` のプロキシ経由に自動フォールバック（静的HTMLのみ）。
+- **HTML を貼り付け** — オリジン＋ページHTMLを貼る。
+- **ローカルから** — 手元のフォルダ（例 `dist/`）を選択。File API でユーザーが選んだファイルだけを読むため CORS 無関係で Canvas でも動く。
+
+API キーは画面に出さず、Canvas 上ではキー注入（`CONFIG.USE_CANVAS_KEY`）、Canvas 外では `CONFIG.GEMINI_API_KEY` を使用。スクリーンショットは **ダミー**（実撮影はフェーズ②）。
+
+---
+
+## フェーズ② — ブラウザアプリ版（`src/`、ローカル実行）
+
+URL を入力すると **サーバー側で実ブラウザ（Playwright）が巡回・実スクリーンショット・ログ取得** を行い、AI がシナリオと操作マニュアルを生成します。フロント（UI）とバックエンド（Node 実行エンジン）を分離し、フェーズ①のサンドボックス制約を解消した本番エンジンです。
+
+### セットアップ & 起動
+
+```bash
+npm install                 # 依存関係（express / playwright / sharp / archiver）
+npm run setup               # Playwright の Chromium を取得（初回のみ）
+
+# ★ いちばん簡単: 設定ファイルにキーを貼る
+cp config.example.js config.js   # コピーして config.js の GEMINI_API_KEY に貼る
+npm start                        # → http://localhost:5179
+```
+
+### API キーの入れ方（どれか1つ）
+
+| 方法 | やること |
+|---|---|
+| **① config.js（おすすめ・最も簡単）** | `cp config.example.js config.js` → `GEMINI_API_KEY` に貼る → `npm start` |
+| ② .env | `cp .env.example .env` → 編集 → `npm start`（自動読込） |
+| ③ 環境変数 | `GEMINI_API_KEY=AIza... npm start` |
+
+`config.js` / `.env` は **.gitignore 済み**（キーはコミットされません）。優先順位は **環境変数 > config.js**。
+API キーはサーバー側のみで扱い、フロントには出しません。ポートは `PORT`（既定 5179）。
+
+### AI プロバイダの切り替え（Gemini ⇄ Dify）
+
+AI 呼び出しは `src/server/ai.js` に隔離してあり、`AI_PROVIDER` で切り替えます。
+
+| プロバイダ | 設定 | 構造化出力 |
+|---|---|---|
+| **Gemini**（既定） | `AI_PROVIDER=gemini` ＋ `GEMINI_API_KEY` | `responseSchema` で厳密に強制 |
+| **Dify** | `AI_PROVIDER=dify` ＋ `DIFY_API_KEY` | プロンプトで JSON 指示＋頑健パース |
+
+Dify の詳しい手順は [Dify.md](Dify.md) を参照。
 
 ### 使い方
 
-1. `index.html` をブラウザ（または Gemini Canvas）で開く。
-2. **API キーは画面に表示しません**（裏側をユーザーに見せない設計）。キーはコード側のみで扱います。
-   - **Gemini Canvas 上で動かす場合は設定不要**。Canvas はキーが空のとき実行時に自動でキーを注入します（`CONFIG.USE_CANVAS_KEY = true`）。
-   - **Canvas 外でローカル単体利用する場合**のみ、コード冒頭の `CONFIG.GEMINI_API_KEY` に自分のキーを入れ、`CONFIG.USE_CANVAS_KEY = false` にします（※配布・コミット時はキーを空に戻すこと）。
-   - 使用モデルはコードの `CONFIG.MODEL`（既定: `gemini-2.5-flash`）で指定します。
-3. 入力モードを選ぶ:
-   - **起点URL から取得**: URL を入れるだけ。直接 fetch が CORS で失敗した場合は、`CONFIG.CORS_PROXIES` のプロキシ経由に自動フォールバックして外部サイトを取得します（検証では `members.co.jp` から 45 ルート抽出を確認）。
-     - 制約: 取得は**静的HTMLのみ**（JS実行なし）。JS描画のSPAや認証必須ページは取得できないことがあります。対象URL・HTMLは第三者プロキシを経由します。恒久対応はフェーズ②（サーバー側 Playwright 取得）。
-   - **HTML を貼り付け**: オリジン（例 `https://example.com`）と、対象ページの HTML を貼る。「サンプルを読み込む」ボタンで動作確認できます。プロキシを使いたくない場合や認証ページではこちら。
-   - **ローカルから**: 手元のフォルダ（例: ビルド済みの `dist/`）や HTML 一式を選択。**あなたが選んだファイルだけを File API で読むため CORS の制約を受けず、Canvas でもサーバー無しで動きます**。各 `.html` を1ルートとして扱います。※ JS で描画する SPA はファイルを読むだけではリンクが取れないことがあります（その場合はフェーズ②/③）。
-4. **▶ パイプライン実行** を押す。
-5. 進捗ログを確認し、完了したら **manual.html / scenario.json / steps.json** をダウンロード、プレビューを確認。
+1. 起点 URL と巡回オプション（最大深さ・最大ページ数・除外パターン）を入力し「巡回を開始」。
+2. 進捗が **SSE でライブ表示**（巡回 → シナリオ生成）。
+3. **シナリオの確認・編集**画面（必須ステップ）→「この内容で撮影・生成」。
+4. 実 Playwright が各ステップを再生し、**操作前後ペア＋赤枠ハイライト付きの実スクショ**と**ログ**を取得。
+5. **manual.html / zip / site** の3形式でダウンロード、プレビュー確認。
 
-### 処理フロー
+### アーキテクチャ
 
 ```
-[入力UI: 起点URL or 貼り付けHTML]
-  → extractRoutes()    : <a href> 列挙（同一オリジンのみ） → routes
-  → generateScenario() : Gemini 2.5 で scenario を生成（responseSchema で構造強制）
-  → runStepsMock()     : 実スクショの代わりにダミーで steps を生成（※後段で実装差し替え）
-  → generateManual()   : steps をステップ単位で説明文化 → 固定HTMLテンプレに結合
-  → [プレビュー表示] + [ダウンロード: manual.html / scenario.json / steps.json]
+ブラウザ(フロント src/web) ──HTTP/SSE── サーバー(Node src/server)
+  URL入力                        POST /api/jobs                （ジョブ投入）
+  進捗バー/ライブログ            GET  /api/jobs/:id/stream     （SSE 進捗）
+  シナリオ編集画面               POST /api/jobs/:id/scenario   （編集後を投入）
+  プレビュー + DL                GET  /api/jobs/:id/result?format=html|zip|site
+
+  パイプライン（すべてサーバー側・ジョブ単位で jobs/<id>/ に保存）:
+    1. crawl()    ← Playwright（同一オリジンBFS / robots.txt尊重 / レート制御）
+    2. scenario() ← AI（responseSchema で構造強制）→ ユーザー編集を必ず挟む
+    3. capture()  ← Playwright（★核心: 前後スクショ / 赤枠 / ログ）
+    4. manual()   ← AI（ステップ単位で説明文 → 固定テンプレ結合）
 ```
 
-### 動作環境と制約（重要）
-
-- 成果物は **Gemini Canvas 上で動く単一HTMLファイル（`index.html`）**。UI・ロジックを1ファイルに同梱。外部ビルド不要、依存ライブラリなし。
-- ブラウザのサンドボックス制約により、**外部サイトの実巡回や Playwright 実行はできない**。フェーズ①では:
-  - 巡回は「ユーザーが貼り付けたHTML、または同一オリジンで取得可能な範囲」だけの簡易版。
-  - **スクリーンショットは取得せず、プレースホルダ（ダミー画像）で代替**。流れと型だけを通す。
-- 呼べる AI は **Gemini API（`gemini-2.5-flash` 等の無料枠）**。Canvas 内から `fetch` で呼ぶ。
-- API キーは UI 入力欄から受け取り、**ハードコードしない**。
+```
+src/
+  shared/types.js          データ契約(JSON3種) / responseSchema / 共通ユーティリティ
+  server/
+    index.js               Express: 静的配信 + API + SSE
+    jobs.js                ジョブ管理（2段階: crawl→scenario→[編集]→capture→manual）
+    ai.js                  AI プロバイダ抽象（gemini ⇄ dify）
+    gemini.js / dify.js    各 AI クライアント（APIキーは env / config.js のみ）
+    result.js              zip / site 形式の組み立て（archiver）
+    pipeline/
+      crawl.js / robots.js 巡回 → routes ＋ 各ページDOM要約（robots尊重）
+      scenario.js          AI → scenario（チャンク分割）
+      capture.js           ★実 Playwright で steps を実データ化（sharp で赤枠合成）
+      manual.js            AI 説明文 → manual.html（inline / linked 2形態）
+  web/                     フロント（index.html / app.js / styles.css）
+test/smoke.mjs             AI無しでエンジン中核を検証するスモークテスト（node test/smoke.mjs）
+```
 
 ---
 
 ## ★ データ契約 JSON 3種（全フェーズ共通契約・キー名厳守）
 
-後続フェーズ②③はこの契約に依存します。**キー名・構造を勝手に変えないこと。** 新機能は常に「既存契約への追加」とし「変更」にしない。
+3フェーズが依存します。**キー名・構造を勝手に変えないこと。** 新機能は常に「既存契約への追加」とし「変更」にしない。型は `src/shared/types.js` に集約。
 
-### [1] routes
-`<a href>` 列挙（同一オリジンのみ）の結果。
+```jsonc
+// [1] routes — 巡回結果
+{ "origin": "https://example.com",
+  "routes": [ { "url": "https://example.com/", "title": "トップ", "depth": 0 } ] }
 
-```json
-{
-  "origin": "https://example.com",
-  "routes": [
-    { "url": "https://example.com/", "title": "トップ", "depth": 0 }
-  ]
-}
-```
+// [2] scenario — AI が responseSchema で生成（type は click|fill|goto|wait）
+{ "baseUrl": "https://example.com",
+  "steps": [ { "id": "step-01", "name": "...", "description": "...", "url": "...",
+               "actions": [ { "type": "fill", "selector": "#email", "value": "<sample>" } ] } ] }
 
-### [2] scenario
-Gemini に `responseSchema` で生成させる「重要画面と操作」。
-
-```json
-{
-  "baseUrl": "https://example.com",
-  "steps": [
-    {
-      "id": "step-01",
-      "name": "トップページ表示",
-      "description": "サイトの入口。主要メニューを確認する。",
-      "url": "https://example.com/",
-      "actions": [
-        { "type": "fill",  "selector": "#email", "value": "<sample>" },
-        { "type": "click", "selector": "button[type=submit]" }
-      ]
-    }
-  ]
-}
-```
-
-`actions` の `type` は `click | fill | goto | wait` を許可。空配列可。
-
-### [3] steps
-フェーズ①は画像をダミー（`placeholder://`）で埋める。フェーズ②で実データに差し替え。
-
-```json
-{
-  "steps": [
-    {
-      "id": "step-01",
-      "name": "トップページ表示",
-      "description": "...",
-      "url": "https://example.com/",
-      "action": "ページを開いて主要メニューを確認",
-      "screenshotBefore": "placeholder://before/step-01",
-      "screenshotAfter": "placeholder://after/step-01",
-      "highlight": null,
-      "consoleLogs": [],
-      "status": "ok"
-    }
-  ]
-}
+// [3] steps — フェーズ①はダミー、②で実データに差し替え
+{ "steps": [ { "id": "step-01", "name": "...", "description": "...", "url": "...", "action": "...",
+               "screenshotBefore": "shots/step-01-before.png",
+               "screenshotAfter": "shots/step-01-after.png",
+               "highlight": { "x":0,"y":0,"width":0,"height":0 },
+               "consoleLogs": [], "status": "ok" } ] }
 ```
 
 ---
 
-## コード構成（`index.html` 内）
+## デモ用 SaaS サイト（`examples/shiftmate/`）
 
-- `extractRoutes(html, origin)` — `<a href>` を同一オリジンのみ列挙して `routes` を生成。
-- `generateScenario(routes, apiKey, model)` — Gemini に `responseSchema` で `scenario` を構造強制生成。ルートが多い場合はチャンク分割。
-- `runStepsMock(scenario)` — 実スクショの代わりにダミーで `steps` を生成。
-  `// TODO(phase2): replace with real Playwright capture output` を明示。
-- `generateManual(steps, apiKey, model)` — steps を**ステップ単位**で Gemini に渡し説明文化、固定 HTML テンプレに結合。画像は Base64 インライン化で単一HTML自己完結。
+マニュアル生成の動作確認・デモ用の **本番想定の静的 SaaS サイト**（架空のシフト管理サービス）。
+ランディング／ログイン／ダッシュボード／シフト作成／スタッフ管理／設定など8ページ。
+Canvas の「ローカルから」モードでこのフォルダを選べば、サーバー無しで一連を試せます。詳細は [examples/shiftmate/README.md](examples/shiftmate/README.md)。
 
 ---
 
-## フェーズ②（実 Playwright）で差し替えるべき箇所
+## フェーズ③（CLI / MCP化）に向けて
 
-- `runStepsMock()` → 実 `capture()` に差し替え（最重要）。`screenshotBefore/After` を実 `page.screenshot`、`highlight` を `locator.boundingBox()`、`consoleLogs` を `page.on('console'/'response')` の抽出ログ、`status` を実成否に。
-- `extractRoutes()` の簡易列挙 → 起点URLからの**同一オリジン BFS 実巡回**（深さ・最大ページ数・除外パターン・robots.txt 尊重・レート制御）。
-- `placeholderToDataUri()` のダミー画像 → 実 PNG（操作前後ペア＋赤枠ハイライト合成、`sharp` 等）。
-- `fetch` でのフロント直叩き → **Gemini をサーバー側から呼ぶ**。API キーをサーバー env に隔離（フロントに出さない）。
-- URL 取得の CORS 制約 → サーバー側 Playwright 取得で解消。
-- 同期処理 → **非同期ジョブ方式（投入→SSE進捗→完成後DL）**、`html/zip/site` の3形式ダウンロード。
+`src/server/pipeline` と `src/shared` を **フロント非依存の core** に昇格し、CLI / MCP / Web の薄いフロントを載せる構成へ。`SourceAdapter`（URL巡回 / ローカルファイル）の抽象化が③の新規ポイント。**JSON 3契約のキー名は不変**のまま、ローカルファイル入力モードを追加します。

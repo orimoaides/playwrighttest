@@ -1,0 +1,21 @@
+{
+  "name": "manual-generator",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "操作マニュアル自動生成ツール フェーズ②: 実Playwrightで巡回・スクショ・ログを取得し、Geminiでシナリオ/マニュアルを生成するローカル実行アプリ",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env start.mjs",
+    "setup": "playwright install chromium",
+    "dev": "node --env-file-if-exists=.env --watch start.mjs"
+  },
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "express": "^4.21.2",
+    "playwright": "^1.49.1",
+    "sharp": "^0.33.5"
+  }
+}

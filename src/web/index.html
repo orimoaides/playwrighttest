@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>操作マニュアル自動生成ツール — Phase 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Phase 2 — Browser App / Real Playwright</div>
+    <h1 class="title">操作マニュアル自動生成ツール</h1>
+    <p class="lead">URL を入力すると、サーバー側で実ブラウザ（Playwright）が巡回・スクリーンショット・ログ取得を行い、Gemini がシナリオと操作マニュアルを生成します。API キーはサーバーにのみ保持されます。</p>
+    <div id="healthNote" class="note" style="display:none"></div>
+  </header>
+
+  <!-- ① 入力 -->
+  <section class="block">
+    <div class="sec-head"><span class="sec-no">01</span><h2 class="sec-title">対象サイト</h2></div>
+    <div class="panel">
+      <label>起点 URL</label>
+      <input id="url" type="text" placeholder="https://example.com/" />
+      <div class="opts">
+        <div><label>最大深さ</label><input id="maxDepth" type="number" value="2" min="0" max="5" /></div>
+        <div><label>最大ページ数</label><input id="maxPages" type="number" value="12" min="1" max="60" /></div>
+        <div class="grow"><label>除外パターン（カンマ区切り）</label><input id="exclude" type="text" value="/logout,/signout,/api/" /></div>
+      </div>
+      <div class="actions">
+        <button id="runBtn" class="btn">巡回を開始</button>
+        <span class="hint">robots.txt を尊重し、レート制御しながら同一オリジンを巡回します。</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ② 進捗 -->
+  <section class="block">
+    <div class="sec-head"><span class="sec-no">02</span><h2 class="sec-title">進捗</h2></div>
+    <div class="panel">
+      <div class="stepper" id="stepper">
+        <div class="snode" data-stage="crawling"><div class="sdot"><span class="n">1</span></div><div class="sname">巡回</div><div class="sfn">crawl</div></div>
+        <div class="snode" data-stage="scenario"><div class="sdot"><span class="n">2</span></div><div class="sname">シナリオ生成</div><div class="sfn">scenario</div></div>
+        <div class="snode" data-stage="awaiting_scenario"><div class="sdot"><span class="n">3</span></div><div class="sname">確認・編集</div><div class="sfn">review</div></div>
+        <div class="snode" data-stage="capturing"><div class="sdot"><span class="n">4</span></div><div class="sname">撮影</div><div class="sfn">capture</div></div>
+        <div class="snode" data-stage="manual"><div class="sdot"><span class="n">5</span></div><div class="sname">マニュアル生成</div><div class="sfn">manual</div></div>
+      </div>
+      <div class="status" id="status"><span class="ind"></span><span id="statusText">URL を入力して「巡回を開始」を押してください。</span></div>
+      <div id="log" class="log"><span class="l-muted">待機中です。</span></div>
+    </div>
+  </section>
+
+  <!-- ③ シナリオ編集 -->
+  <section class="block" id="scenarioBlock" style="display:none">
+    <div class="sec-head"><span class="sec-no">03</span><h2 class="sec-title">シナリオの確認・編集</h2>
+      <p class="sec-desc">この内容で実スクリーンショットを撮影します。不要なステップの削除や操作の修正ができます（JSON）。</p></div>
+    <div class="panel">
+      <textarea id="scenarioEditor" spellcheck="false"></textarea>
+      <div class="actions">
+        <button id="captureBtn" class="btn">この内容で撮影・生成</button>
+        <button id="resetScenarioBtn" class="btn ghost">生成された内容に戻す</button>
+        <span id="scenarioError" class="hint err"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ④ 成果物 -->
+  <section class="block" id="resultBlock" style="display:none">
+    <div class="sec-head"><span class="sec-no">04</span><h2 class="sec-title">成果物</h2>
+      <p class="sec-desc" id="resultSummary"></p></div>
+    <div class="panel">
+      <div class="files">
+        <a id="dlHtml" class="file" href="#">manual.html（単一HTML）</a>
+        <a id="dlZip" class="file" href="#">zip（manual＋shots＋JSON）</a>
+        <a id="dlSite" class="file" href="#">site（複数ページ静的サイト）</a>
+      </div>
+      <p class="frame-cap">プレビュー（manual.html）</p>
+      <iframe id="preview" class="preview-frame" title="manual preview"></iframe>
+    </div>
+  </section>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>
