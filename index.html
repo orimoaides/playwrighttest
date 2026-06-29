@@ -220,6 +220,7 @@
       <div class="seg" id="modeSeg" style="margin-bottom:4px">
         <button data-mode="url" class="active">URL から取得</button>
         <button data-mode="html">HTML を貼り付け</button>
+        <button data-mode="local">ローカルから</button>
       </div>
 
       <div id="urlMode">
@@ -232,6 +233,11 @@
         <input id="originInput" type="text" placeholder="https://example.com" />
         <label>ページ HTML</label>
         <textarea id="htmlInput" placeholder="<a href> を含むページの HTML を貼り付けてください"></textarea>
+      </div>
+      <div id="localMode" style="display:none">
+        <label>ローカルのフォルダを選択 <span class="opt">（例: ビルド済みの dist/ や HTML 一式）</span></label>
+        <input id="localInput" type="file" webkitdirectory directory multiple />
+        <div class="hint" id="localStatus">フォルダを選ぶと、中の <code class="k">.html</code> ファイルをルートとして読み込みます。あなたが選んだファイルだけを読むので、<strong>サーバー不要・CORS 無関係</strong>で Canvas でも動きます。※ JS で描画する SPA はファイルを読むだけではリンクが取れないことがあります（その場合はフェーズ②/③）。</div>
       </div>
 
       <div class="actions">
@@ -396,6 +402,37 @@ function extractRoutes(html, origin) {
     routes.push({ url: abs.href, title: label || abs.pathname || "(無題)", depth });
   }
   return { origin: originUrl.origin, routes };
+}
+
+/* =================================================================================
+ * ローカル入力: ユーザーが選んだフォルダ/ファイルから routes（契約[1]）を直接構築する。
+ *   ブラウザの File API でユーザーが明示選択したファイルだけを読むため、CORS の制約を受けず
+ *   Canvas でも動く。各 .html ファイルを1ルートとして扱う（静的サイト一式に最適）。
+ *   ※ JS描画SPA（中身が空のHTML）はリンクが取れないことがある → フェーズ②/③で対応。
+ * ================================================================================= */
+async function buildRoutesFromLocalFiles(fileList) {
+  const all = Array.from(fileList);
+  const htmls = all.filter((f) => /\.x?html?$/i.test(f.name));
+  if (htmls.length === 0) throw new Error("選択フォルダに .html ファイルが見つかりませんでした。");
+
+  const rootName = (htmls[0].webkitRelativePath || htmls[0].name).split("/")[0] || "local";
+  const origin = "local://" + rootName;
+
+  const routes = [];
+  for (const f of htmls) {
+    const rel = f.webkitRelativePath || f.name;
+    let title = rel;
+    try {
+      const text = await f.text();
+      const doc = new DOMParser().parseFromString(text, "text/html");
+      title = (doc.querySelector("title")?.textContent || "").trim() || rel.split("/").pop();
+    } catch { /* 読めないファイルはパス名をタイトルに */ }
+    const depth = Math.max(0, rel.split("/").length - 2); // ルート直下のファイルを depth 0
+    routes.push({ url: rel, title, depth });
+  }
+  // index.html / 浅い階層を先頭に
+  routes.sort((a, b) => a.depth - b.depth || (/(^|\/)index\.html?$/i.test(b.url) ? 1 : 0) - (/(^|\/)index\.html?$/i.test(a.url) ? 1 : 0));
+  return { origin, routes };
 }
 
 /* =================================================================================
@@ -617,34 +654,45 @@ async function runPipeline() {
   let stage = null;
 
   try {
-    // 入力取得
-    let html, origin;
-    if (currentMode === "url") {
-      const startUrl = $("startUrl").value.trim();
-      if (!startUrl) throw new Error("起点 URL を入力してください。");
-      origin = new URL(startUrl).origin;
-      setStatus("Web ページを取得しています…", "running"); logStart(`URL 取得を試行: ${startUrl}`);
-      html = await fetchPage(startUrl);
-      if (html == null) {
-        logWarn("外部サイトの取得に失敗しました（直接 fetch・CORS プロキシともに不可）。");
-        logWarn("→ JS描画のSPAや認証必須ページの可能性があります。「HTML を貼り付け」モードもご利用いただけます（恒久対応はフェーズ②のサーバー側取得）。");
-        setStatus("外部サイトの取得に失敗しました。別サイトを試すか「HTML を貼り付け」をご利用ください。", null);
-        return; // finally で実行ボタンは再有効化される
-      }
-      logOk(`HTML 取得成功 (${html.length.toLocaleString()} bytes)`);
+    // ── 入力取得 & STEP1 routes ──
+    if (currentMode === "local") {
+      // ローカルのフォルダ/ファイルから routes を直接構築（サーバー不要・CORS無関係）
+      const files = $("localInput").files;
+      if (!files || files.length === 0) throw new Error("ローカルのフォルダを選択してください。");
+      stage = "routes"; setStage(stage, "active"); setStatus("ローカルファイルを読み込んでいます…", "running");
+      logStart(`buildRoutesFromLocalFiles(): ${files.length} 件を走査`);
+      STATE.routes = await buildRoutesFromLocalFiles(files);
+      $("routesOut").value = JSON.stringify(STATE.routes, null, 2);
+      logOk(`routes 抽出: ${STATE.routes.routes.length} 件（ローカル）`); setStage(stage, "done");
     } else {
-      origin = $("originInput").value.trim(); html = $("htmlInput").value;
-      if (!origin) throw new Error("オリジンを入力してください。");
-      if (!html.trim()) throw new Error("HTML を貼り付けてください。");
-      logOk("貼り付けられた HTML を使用します。");
-    }
+      let html, origin;
+      if (currentMode === "url") {
+        const startUrl = $("startUrl").value.trim();
+        if (!startUrl) throw new Error("起点 URL を入力してください。");
+        origin = new URL(startUrl).origin;
+        setStatus("Web ページを取得しています…", "running"); logStart(`URL 取得を試行: ${startUrl}`);
+        html = await fetchPage(startUrl);
+        if (html == null) {
+          logWarn("外部サイトの取得に失敗しました（直接 fetch・CORS プロキシともに不可）。");
+          logWarn("→ JS描画のSPAや認証必須ページの可能性があります。「HTML を貼り付け」モードもご利用いただけます（恒久対応はフェーズ②のサーバー側取得）。");
+          setStatus("外部サイトの取得に失敗しました。別サイトを試すか「HTML を貼り付け」をご利用ください。", null);
+          return; // finally で実行ボタンは再有効化される
+        }
+        logOk(`HTML 取得成功 (${html.length.toLocaleString()} bytes)`);
+      } else {
+        origin = $("originInput").value.trim(); html = $("htmlInput").value;
+        if (!origin) throw new Error("オリジンを入力してください。");
+        if (!html.trim()) throw new Error("HTML を貼り付けてください。");
+        logOk("貼り付けられた HTML を使用します。");
+      }
 
-    // STEP1 routes
-    stage = "routes"; setStage(stage, "active"); setStatus("リンクを抽出しています…", "running");
-    logStart("extractRoutes(): <a href> 列挙（同一オリジン）");
-    STATE.routes = extractRoutes(html, origin);
-    $("routesOut").value = JSON.stringify(STATE.routes, null, 2);
-    logOk(`routes 抽出: ${STATE.routes.routes.length} 件`); setStage(stage, "done");
+      // STEP1 routes
+      stage = "routes"; setStage(stage, "active"); setStatus("リンクを抽出しています…", "running");
+      logStart("extractRoutes(): <a href> 列挙（同一オリジン）");
+      STATE.routes = extractRoutes(html, origin);
+      $("routesOut").value = JSON.stringify(STATE.routes, null, 2);
+      logOk(`routes 抽出: ${STATE.routes.routes.length} 件`); setStage(stage, "done");
+    }
 
     // STEP2 scenario
     stage = "scenario"; setStage(stage, "active");
@@ -692,11 +740,17 @@ $("modeSeg").addEventListener("click", (e) => {
   for (const b of $("modeSeg").children) b.classList.toggle("active", b === btn);
   $("urlMode").style.display = currentMode === "url" ? "" : "none";
   $("htmlMode").style.display = currentMode === "html" ? "" : "none";
+  $("localMode").style.display = currentMode === "local" ? "" : "none";
+});
+$("localInput").addEventListener("change", (e) => {
+  const n = (e.target.files || []).length;
+  const h = Array.from(e.target.files || []).filter((f) => /\.x?html?$/i.test(f.name)).length;
+  $("localStatus").textContent = n ? `選択: ${n} ファイル（うち .html ${h} 件をルートとして読み込みます）` : "フォルダを選んでください。";
 });
 $("sampleBtn").addEventListener("click", () => {
   currentMode = "html";
   for (const b of $("modeSeg").children) b.classList.toggle("active", b.dataset.mode === "html");
-  $("urlMode").style.display = "none"; $("htmlMode").style.display = "";
+  $("urlMode").style.display = "none"; $("htmlMode").style.display = ""; $("localMode").style.display = "none";
   $("originInput").value = "https://shop.example.com";
   $("htmlInput").value =
 `<!DOCTYPE html><html><head><title>サンプルECサイト</title></head>
