@@ -15,13 +15,24 @@ URL を入力すると、**サーバー側で実ブラウザ（Playwright）が�
 ```bash
 npm install                 # 依存関係（express / playwright / sharp / archiver）
 npm run setup               # Playwright の Chromium を取得（初回のみ）
-GEMINI_API_KEY=AIza... npm start
-# → http://localhost:5179 を開く
+
+# ★ いちばん簡単: 設定ファイルにキーを貼る
+cp config.example.js config.js   # コピーして
+#   config.js を開き GEMINI_API_KEY に自分のキーを貼る
+npm start                        # → http://localhost:5179
 ```
 
-`.env` を置けば `npm start` が自動で読み込みます（`.env.example` を参照）。
+### API キーの入れ方（どれか1つ）
 
-- **API キーは必ずサーバーの環境変数**。フロントには出しません（フェーズ①より安全になる重要点）。
+| 方法 | やること |
+|---|---|
+| **① config.js（おすすめ・最も簡単）** | `cp config.example.js config.js` → `GEMINI_API_KEY` に貼る → `npm start` |
+| ② .env | `cp .env.example .env` → 編集 → `npm start`（自動読込） |
+| ③ 環境変数 | `GEMINI_API_KEY=AIza... npm start` |
+
+`config.js` / `.env` は **.gitignore 済み**（キーはコミットされません）。複数指定した場合は **環境変数 > config.js** の優先順位で適用されます。
+
+- **API キーはサーバー側のみ**で扱い、フロントには出しません（フェーズ①より安全になる重要点）。
 - ポートは `PORT`（既定 5179）で変更可能。
 
 ### AI プロバイダの切り替え（Gemini ⇄ Dify）

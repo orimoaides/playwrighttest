@@ -45,15 +45,35 @@
 
 ### 4. アプリ側に設定
 
-`.env`（`.env.example` をコピー）に記載するか、起動時に環境変数で渡します。
+**いちばん簡単なのは `config.js` に貼る方法です。**
 
 ```bash
-# .env の例
+cp config.example.js config.js
+```
+
+`config.js` を開いて編集:
+
+```js
+export default {
+  AI_PROVIDER: "dify",
+  DIFY_API_KEY: "app-xxxxxxxxxxxxxxxx",      // ← ここに貼る
+  // DIFY_BASE_URL: "https://your-dify.example.com/v1", // セルフホスト時のみ
+};
+```
+
+`.env` 派でも、環境変数で渡してもOK:
+
+```bash
+# .env の例（cp .env.example .env）
 AI_PROVIDER=dify
 DIFY_API_KEY=app-xxxxxxxxxxxxxxxx
-# セルフホスト Dify のときだけ（cloud は不要）
-# DIFY_BASE_URL=https://your-dify.example.com/v1
+# DIFY_BASE_URL=https://your-dify.example.com/v1   # セルフホスト時のみ
+
+# もしくは一発で
+# AI_PROVIDER=dify DIFY_API_KEY=app-xxxx npm start
 ```
+
+`config.js` / `.env` は .gitignore 済み。優先順位は **環境変数 > config.js**。
 
 ### 5. 起動して確認
 

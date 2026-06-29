@@ -5,3 +5,4 @@ jobs/
 package-lock.json
 .env
 .env.local
+config.js
