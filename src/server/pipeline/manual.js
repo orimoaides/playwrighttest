@@ -9,7 +9,7 @@
 
 import path from "node:path";
 import fs from "node:fs/promises";
-import { callGemini } from "../gemini.js";
+import { callAI } from "../ai.js";
 import { MANUAL_STEP_SCHEMA } from "../../shared/types.js";
 
 /**
@@ -42,7 +42,7 @@ name: ${s.name}
 url: ${s.url}
 想定操作: ${s.action}
 補足: ${s.description}`;
-      const o = await callGemini(prompt, MANUAL_STEP_SCHEMA);
+      const o = await callAI(prompt, MANUAL_STEP_SCHEMA);
       heading = o.heading || heading;
       body = o.body || body;
       log(`${s.id} 説明文 OK`, "ok");

@@ -175,9 +175,10 @@ async function init() {
   try {
     const h = await (await fetch("/api/health")).json();
     if (!h.hasApiKey) {
+      const env = h.keyEnv || "GEMINI_API_KEY";
       const n = $("healthNote");
       n.style.display = "";
-      n.textContent = "注意: サーバーに GEMINI_API_KEY が設定されていません。シナリオ／マニュアル生成は動作しません（GEMINI_API_KEY=... npm start で起動してください）。";
+      n.textContent = `注意: AIプロバイダ「${h.provider || "gemini"}」のキー（${env}）がサーバーに設定されていません。シナリオ／マニュアル生成は動作しません（${env}=... npm start で起動してください）。`;
     }
   } catch { /* health 取得失敗は無視 */ }
 }

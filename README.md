@@ -19,8 +19,27 @@ GEMINI_API_KEY=AIza... npm start
 # → http://localhost:5179 を開く
 ```
 
-- **API キーは必ずサーバーの環境変数 `GEMINI_API_KEY`**。フロントには出しません（フェーズ①より安全になる重要点）。
-- 使用モデルは `GEMINI_MODEL`（既定 `gemini-2.5-flash`）、ポートは `PORT`（既定 5179）で変更可能。
+`.env` を置けば `npm start` が自動で読み込みます（`.env.example` を参照）。
+
+- **API キーは必ずサーバーの環境変数**。フロントには出しません（フェーズ①より安全になる重要点）。
+- ポートは `PORT`（既定 5179）で変更可能。
+
+### AI プロバイダの切り替え（Gemini ⇄ Dify）
+
+AI 呼び出しは `src/server/ai.js` に隔離してあり、env で切り替えます。
+
+| プロバイダ | 設定 | 構造化出力 |
+|---|---|---|
+| **Gemini**（既定） | `AI_PROVIDER=gemini` ＋ `GEMINI_API_KEY`（`GEMINI_MODEL` 任意） | `responseSchema` で厳密に強制 |
+| **Dify** | `AI_PROVIDER=dify` ＋ `DIFY_API_KEY`（`DIFY_BASE_URL` 任意） | プロンプトで JSON 指示＋頑健パース |
+
+```bash
+# Dify のチャットボットアプリ経由で動かす例
+AI_PROVIDER=dify DIFY_API_KEY=app-xxxx npm start
+```
+
+**Dify 側の準備**: Dify で「チャットボット」アプリを1つ作り、モデルを選び、**システムプロンプトは空でOK**（本ツールがプロンプト全文を送ります）。発行された API キー（`app-...`）を `DIFY_API_KEY` に設定するだけ。セルフホスト Dify の場合は `DIFY_BASE_URL` をその `/v1` エンドポイントに。
+※ Dify では Gemini の `responseSchema` のような厳密な構造強制が無いため、本ツールは「JSONのみ返す」指示＋コードフェンス除去・JSONブロック抽出で対応します。
 
 ## 使い方
 

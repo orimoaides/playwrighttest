@@ -14,7 +14,7 @@ import express from "express";
 import { chromium } from "playwright";
 import { createJob, getJob, submitScenario, setBrowserProvider } from "./jobs.js";
 import { streamZip, streamSite } from "./result.js";
-import { hasApiKey, MODEL } from "./gemini.js";
+import { aiReady, aiInfo, AI_PROVIDER } from "./ai.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const WEB_DIR = path.join(__dirname, "..", "web");
@@ -41,7 +41,9 @@ app.use(express.static(WEB_DIR));
 
 /** 稼働状況（フロントが API キー有無などを確認） */
 app.get("/api/health", (req, res) => {
-  res.json({ ok: true, hasApiKey: hasApiKey(), model: MODEL });
+  const info = aiInfo();
+  // hasApiKey は後方互換（フロントが参照）。provider/detail を追加。
+  res.json({ ok: true, hasApiKey: aiReady(), provider: info.provider, detail: info.detail, keyEnv: info.keyEnv });
 });
 
 /** ジョブ投入 → crawl→scenario（その後 awaiting_scenario で停止） */
@@ -49,7 +51,7 @@ app.post("/api/jobs", async (req, res) => {
   try {
     const { url, options } = req.body || {};
     if (!url || !/^https?:\/\//i.test(url)) return res.status(400).json({ error: "有効な url を指定してください。" });
-    if (!hasApiKey()) return res.status(400).json({ error: "サーバーに GEMINI_API_KEY が設定されていません。" });
+    if (!aiReady()) return res.status(400).json({ error: `サーバーに ${aiInfo().keyEnv} が設定されていません（AI_PROVIDER=${AI_PROVIDER}）。` });
     const job = await createJob({ url, options: options || {} });
     res.json({ id: job.id, state: job.state });
   } catch (e) {
@@ -127,6 +129,7 @@ app.get("/api/jobs/:id/result", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`\n  操作マニュアル自動生成ツール (Phase 2)`);
   console.log(`  ▶ http://localhost:${PORT}`);
-  console.log(`  GEMINI_API_KEY: ${hasApiKey() ? "設定済み" : "未設定（生成不可。env に設定してください）"}`);
-  console.log(`  model: ${MODEL}\n`);
+  const info = aiInfo();
+  console.log(`  AI: ${info.provider} (${info.detail})`);
+  console.log(`  ${info.keyEnv}: ${aiReady() ? "設定済み" : "未設定（生成不可。env に設定してください）"}\n`);
 });

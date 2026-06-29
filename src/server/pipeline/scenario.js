@@ -7,7 +7,7 @@
  * TODO(phase3): core の scenario モジュールとして切り出す。
  */
 
-import { callGemini } from "../gemini.js";
+import { callAI } from "../ai.js";
 import { SCENARIO_SCHEMA, makeStepId } from "../../shared/types.js";
 
 const CHUNK = 10;
@@ -61,7 +61,7 @@ ${baseUrl}
 ${JSON.stringify(pages, null, 2)}`;
 
     try {
-      const out = await callGemini(prompt, SCENARIO_SCHEMA);
+      const out = await callAI(prompt, SCENARIO_SCHEMA);
       const steps = Array.isArray(out.steps) ? out.steps : [];
       collected.push(...steps);
       log(`チャンク ${chunkNo} → ${steps.length} ステップ`, "ok");

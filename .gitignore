@@ -3,3 +3,5 @@ node_modules/
 *.log
 jobs/
 package-lock.json
+.env
+.env.local
